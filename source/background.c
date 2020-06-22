@@ -556,6 +556,10 @@ int background_w_fld(
     // w_ede(a) taken from eq. (11) in 1706.00730
     *w_fld = - dOmega_ede_over_da*a/Omega_ede/3./(1.-Omega_ede)+a_eq/3./(a+a_eq);
     break;
+  case IVE:
+     // here goes your code for w_fld
+     // TODO *w_fld = ...
+     break;
   }
 
 
@@ -575,6 +579,9 @@ int background_w_fld(
       + dOmega_ede_over_da*dOmega_ede_over_da*a/3./(1.-Omega_ede)/(1.-Omega_ede)/Omega_ede
       + a_eq/3./(a+a_eq)/(a+a_eq);
     break;
+  case IVE:
+     // TODO *dw_over_da_fld = ...
+    break;
   }
 
   /** - finally, give the analytic solution of the following integral:
@@ -593,6 +600,9 @@ int background_w_fld(
     break;
   case EDE:
     class_stop(pba->error_message,"EDE implementation not finished: to finish it, read the comments in background.c just before this line\n");
+    break;
+  case IVE:
+    // TODO *integral_fld = ...
     break;
   }
 

@@ -1,45 +1,118 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+CLASS: Cosmic Linear Anisotropy Solving System  {#mainpage}
+==============================================
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+Authors: Julien Lesgourgues and Thomas Tram
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+with several major inputs from other people, especially Benjamin
+Audren, Simon Prunet, Jesus Torrado, Miguel Zumalacarregui, Francesco
+Montanari, etc.
 
----
+For download and information, see http://class-code.net
 
-## Edit a file
 
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
+Compiling CLASS and getting started
+-----------------------------------
 
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+(the information below can also be found on the webpage, just below
+the download button)
 
----
+Download the code from the webpage and unpack the archive (tar -zxvf
+class_vx.y.z.tar.gz), or clone it from
+https://github.com/lesgourg/class_public. Go to the class directory
+(cd class/ or class_public/ or class_vx.y.z/) and compile (make clean;
+make class). You can usually speed up compilation with the option -j:
+make -j class. If the first compilation attempt fails, you may need to
+open the Makefile and adapt the name of the compiler (default: gcc),
+of the optimization flag (default: -O4 -ffast-math) and of the OpenMP
+flag (default: -fopenmp; this flag is facultative, you are free to
+compile without OpenMP if you don't want parallel execution; note that
+you need the version 4.2 or higher of gcc to be able to compile with
+-fopenmp). Many more details on the CLASS compilation are given on the
+wiki page
 
-## Create a file
+https://github.com/lesgourg/class_public/wiki/Installation
 
-Next, you’ll add a new file to this repository.
+(in particular, for compiling on Mac >= 10.9 despite of the clang
+incompatibility with OpenMP).
 
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
+To check that the code runs, type:
 
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
+    ./class explanatory.ini
 
----
+The explanatory.ini file is THE reference input file, containing and
+explaining the use of all possible input parameters. We recommend to
+read it, to keep it unchanged (for future reference), and to create
+for your own purposes some shorter input files, containing only the
+input lines which are useful for you. Input files must have a *.ini
+extension.
 
-## Clone a repository
+If you want to play with the precision/speed of the code, you can use
+one of the provided precision files (e.g. cl_permille.pre) or modify
+one of them, and run with two input files, for instance:
 
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
+    ./class test.ini cl_permille.pre
 
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
+The files *.pre are suppposed to specify the precision parameters for
+which you don't want to keep default values. If you find it more
+convenient, you can pass these precision parameter values in your *.ini
+file instead of an additional *.pre file.
 
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+The automatically-generated documentation is located in
+
+    doc/manual/html/index.html
+    doc/manual/CLASS_manual.pdf
+
+On top of that, if you wish to modify the code, you will find lots of
+comments directly in the files.
+
+Python
+------
+
+To use CLASS from python, or ipython notebooks, or from the Monte
+Python parameter extraction code, you need to compile not only the
+code, but also its python wrapper. This can be done by typing just
+'make' instead of 'make class' (or for speeding up: 'make -j'). More
+details on the wrapper and its compilation are found on the wiki page
+
+https://github.com/lesgourg/class_public/wiki
+
+Plotting utility
+----------------
+
+Since version 2.3, the package includes an improved plotting script
+called CPU.py (Class Plotting Utility), written by Benjamin Audren and
+Jesus Torrado. It can plot the Cl's, the P(k) or any other CLASS
+output, for one or several models, as well as their ratio or percentage
+difference. The syntax and list of available options is obtained by
+typing 'pyhton CPU.py -h'. There is a similar script for MATLAB,
+written by Thomas Tram. To use it, once in MATLAB, type 'help
+plot_CLASS_output.m'
+
+Developing the code
+--------------------
+
+If you want to develop the code, we suggest that you download it from
+the github webpage
+
+https://github.com/lesgourg/class_public
+
+rather than from class-code.net. Then you will enjoy all the feature
+of git repositories. You can even develop your own branch and get it
+merged to the public distribution. For related instructions, check
+
+https://github.com/lesgourg/class_public/wiki/Public-Contributing
+
+Using the code
+--------------
+
+You can use CLASS freely, provided that in your publications, you cite
+at least the paper `CLASS II: Approximation schemes <http://arxiv.org/abs/1104.2933>`. Feel free to cite more CLASS papers!
+
+Support
+-------
+
+To get support, please open a new issue on the
+
+https://github.com/lesgourg/class_public
+
+webpage!

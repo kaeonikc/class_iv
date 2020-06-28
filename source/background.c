@@ -557,9 +557,14 @@ int background_w_fld(
     *w_fld = - dOmega_ede_over_da*a/Omega_ede/3./(1.-Omega_ede)+a_eq/3./(a+a_eq);
     break;
   case IVE:
-     // here goes your code for w_fld
-     // TODO *w_fld = ...
-     break;
+    // here goes your code for w_fld
+    // TODO *w_fld = ...
+    // w_fld in two-fluid case
+    // rho_m_ive stands for pressureless-matter energy density interacting with vacuum energy ...UNDEFINED YET
+    // rho_v_ive is vacuum energy density interacting with pressureless-matter ...UNDEFINED YET
+    // w_fld here is the effective (overall) equation od state
+    *w_fld = - rho_v_ive / (rho_m_ive + rho_v_ive) // Omega_ive still needs to be defined
+    break;
   }
 
 
@@ -580,7 +585,11 @@ int background_w_fld(
       + a_eq/3./(a+a_eq)/(a+a_eq);
     break;
   case IVE:
-     // TODO *dw_over_da_fld = ...
+    // TODO *dw_over_da_fld = ...
+    // alpha_ive and beta_ive are interation parameters according to the model 
+    // Q = alpha_ive * H * rho_m_ive + beta_ive * H * rho_v_ive
+    *dw_over_da_fld = (- alpha_ive * power(rho_m_ive, 2.) - beta_ive * power(rho_v_ive, 2.) 
+      - (alpha_ive + beta_ive + 3.) * rho_m_ive * rho_v_ive )/a
     break;
   }
 
@@ -602,7 +611,7 @@ int background_w_fld(
     class_stop(pba->error_message,"EDE implementation not finished: to finish it, read the comments in background.c just before this line\n");
     break;
   case IVE:
-    // TODO *integral_fld = ...
+    // TODO *integral_fld = ... 
     break;
   }
 

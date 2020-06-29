@@ -586,7 +586,7 @@ int background_w_fld(
     break;
   case IVE:
     // TODO *dw_over_da_fld = ...
-    // alpha_ive and beta_ive are interation parameters according to the model 
+    // alpha_ive and beta_ive are interation parameters according to the model, UNDEFINED YET
     // Q = alpha_ive * H * rho_m_ive + beta_ive * H * rho_v_ive
     *dw_over_da_fld = (- alpha_ive * power(rho_m_ive, 2.) - beta_ive * power(rho_v_ive, 2.) 
       - (alpha_ive + beta_ive + 3.) * rho_m_ive * rho_v_ive )/a
@@ -612,6 +612,13 @@ int background_w_fld(
     break;
   case IVE:
     // TODO *integral_fld = ... 
+    // Define function S(a,b) = sqrt( (a+b+3)^2 - 4ab ), needs to decrare funct_S_ive  
+    funct_S_ive = sqrt( pow(alpha_ive + beta_ive + 3., 2.) - 4. * alpha_ive * beta_ive ) 
+
+    // Exact solution of integrate w da 
+    // Assumming the Friedmann constraint Om + Ov = 1
+    // *integral_fld = (2.*alpha_ive * Omega_m + (alpha_ive + beta_ive +3. - funct_S_ive) * (1.-Omega_m) )*log(a) / 
+    //  ( (beta_ive - alpha_ive + funct_S_ive) + 6. * Omega_m - 3. ) + ... 
     break;
   }
 

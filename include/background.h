@@ -20,7 +20,7 @@ enum spatial_curvature {flat,open,closed};
 
 /** list of possible parametrisations of the DE equation of state */
 
-enum equation_of_state {CLP,EDE};
+enum equation_of_state {CLP,EDE,IDM_IV};
 
 /**
  * All background parameters and evolution that other modules need to know.
@@ -61,6 +61,8 @@ struct background
 
   double Omega0_fld; /**< \f$ \Omega_{0 de} \f$: fluid */
 
+  double Omega0_iv; /**< \f$ \Omega_{0 iv} \f$: vacuum interacting with dark matter */
+
   enum equation_of_state fluid_equation_of_state; /**< parametrisation scheme for fluid equation of state */
 
   double w0_fld; /**< \f$ w0_{DE} \f$: current fluid equation of state parameter */
@@ -87,6 +89,8 @@ struct background
 
   double Omega0_idm_dr; /**< \f$ \Omega_{0 idm_dr} \f$: dark matter interacting with dark radiation */
 
+  double Omega0_idm_iv; /**< \f$ \Omega_{0 idm_iv} \f$: dark matter interacting with interacting vacuum */
+
   double Omega0_dcdmdr; /**< \f$ \Omega_{0 dcdm}+\Omega_{0 dr} \f$: decaying cold dark matter (dcdm) decaying to dark radiation (dr) */
 
   double Gamma_dcdm; /**< \f$ \Gamma_{dcdm} \f$: decay constant for decaying cold dark matter */
@@ -106,6 +110,9 @@ struct background
   //double scf_A; /**< \f$ \alpha \f$ : Albrecht-Skordis offset */
 
   double Omega0_k; /**< \f$ \Omega_{0_k} \f$: curvature contribution */
+
+  double alpha_idm_iv;     /**< \f$ \alpha_{idm\_iv} \f$: interaction parameter for IDM_IV */
+  double beta_idm_iv;      /**< \f$ \beta_{idm\_iv} \f$: interaction parameter for IDM_IV */
 
   int N_ncdm;                            /**< Number of distinguishable ncdm species */
   double * M_ncdm;                       /**< vector of masses of non-cold relic:
@@ -191,6 +198,8 @@ struct background
   int index_bg_rho_ur;        /**< relativistic neutrinos/relics density */
   int index_bg_rho_idm_dr;    /**< density of dark matter interacting with dark radiation */
   int index_bg_rho_idr;       /**< density of interacting dark radiation */
+  int index_bg_rho_idm_iv;    /**< density of dark matter interacting with vacuum */
+  int index_bg_rho_iv;       /**< density of interacting vacuum */
   int index_bg_rho_dcdm;      /**< dcdm density */
   int index_bg_rho_dr;        /**< dr density */
 
@@ -304,6 +313,7 @@ struct background
   short has_ur;        /**< presence of ultra-relativistic neutrinos/relics? */
   short has_idr;       /**< presence of interacting dark radiation? */
   short has_idm_dr;    /**< presence of dark matter interacting with dark radiation? */
+  short has_idm_iv;    /**< presence of dark matter interacting with vacuum? */
   short has_curvature; /**< presence of global spatial curvature? */
 
   //@}

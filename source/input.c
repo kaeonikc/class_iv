@@ -897,6 +897,50 @@ int input_read_parameters(
 
   Omega_tot += pba->Omega0_cdm;
 
+  /** - Omega_icdm_iv (DM interacting with interacting vacuum) */
+  class_call(parser_read_double(pfc,"Omega_idm_iv",&param1,&flag1,errmsg),
+             errmsg,
+             errmsg);
+  class_call(parser_read_double(pfc,"omega_idm_iv",&param2,&flag2,errmsg),
+             errmsg,
+             errmsg);
+  class_call(parser_read_double(pfc,"f_idm_iv",&param3,&flag3,errmsg),
+             errmsg,
+             errmsg);
+  class_test(class_at_least_two_of_three(flag1,flag2,flag3),
+             errmsg,
+             "In input file, you can only enter one of Omega_idm_iv, omega_idm_iv or f_idm_iv, choose one");
+
+/* ---> if user passes directly the density of idm_iv */
+  if (flag1 == _TRUE_)
+    pba->Omega0_idm_iv = param1;
+  if (flag2 == _TRUE_)
+    pba->Omega0_idm_iv = param2/pba->h/pba->h;
+
+  /* ---> if user passes density of idm_iv as a fraction of the CDM one */
+  if (flag3 == _TRUE_) {
+    class_test((param3 < 0.) || (param3 > 1.),
+               errmsg,
+               "The fraction of interacting DM with IV must be between 0 and 1, you asked for f_idm_iv=%e",param3);
+    class_test((param3 > 0.) && (pba->Omega0_cdm == 0.),
+               errmsg,
+               "If you want a fraction of interacting DM with IV, to be consistent, you should not set the fraction of CDM to zero");
+
+    pba->Omega0_idm_iv = param3 * pba->Omega0_cdm;
+    /* readjust Omega0_cdm */
+    pba->Omega0_cdm -= pba->Omega0_idm_iv;
+    /* to be consistent, remove same amount from Omega_tot */
+    Omega_tot -= pba->Omega0_idm_iv;
+    /* avoid Omega0_cdm =0 in synchronous gauge */
+    if ((ppt->gauge == synchronous) && (pba->Omega0_cdm==0)) {
+      pba->Omega0_cdm += ppr->Omega0_cdm_min_synchronous;
+      Omega_tot += ppr->Omega0_cdm_min_synchronous;
+      pba->Omega0_idm_iv -= ppr->Omega0_cdm_min_synchronous;
+    }
+  }
+
+  Omega_tot += pba->Omega0_idm_iv;  
+
   /** - Omega_0_icdm_dr (DM interacting with DR) */
   class_call(parser_read_double(pfc,"Omega_idm_dr",&param1,&flag1,errmsg),
              errmsg,
@@ -1311,6 +1355,53 @@ int input_read_parameters(
     Omega_tot);
   */
 
+   /** - Omega_iv (fraction of vacuum/lambda interacting with (dark) matter) */
+  class_call(parser_read_double(pfc,"f_iv",&param1,&flag1,errmsg),
+             errmsg,
+             errmsg);
+
+  if (flag1 == _TRUE_) {
+
+    class_test((param1 < 0.) || (param1 > 1.),
+               errmsg,
+               "The fraction of interacting vacuum  must be between 0 and 1, you asked for f_idm_iv=%e",param1);
+
+    pba->Omega0_iv = param1*pba->Omega0_lambda;
+    pba->Omega0_lambda -= pba->Omega0_iv;
+
+    class_test((pba->Omega0_idm_iv == 0. && pba->Omega0_iv != 0.),
+	       errmsg,
+               "You have requested interacting vaccum, this requires a non-zero density of interacting DM. Please set Omega0_idm_iv > 0., omega0_idm_iv > 0. or f_idm_iv > 0. with Omega0_cmd > 0.");
+
+  }
+
+  if (pba->Omega0_idm_iv != 0.) {
+
+    /* sanity checks */    
+
+    class_test(pba->Omega0_iv == 0.0,
+	       errmsg,
+               "You have requested interacting DM with IV, this requires a non-zero density of interacting IV. Please set f_iv > 0.0 with an (implicit) Omega0_lambda > 0.0");
+
+
+    /* Read alpha_idm_iv & beta_idm_iv */
+
+    class_call(parser_read_double(pfc,"alpha_idm_iv",&param1,&flag1,errmsg),
+             errmsg,
+             errmsg);
+
+    class_call(parser_read_double(pfc,"beta_idm_iv",&param2,&flag1,errmsg),
+             errmsg,
+             errmsg);
+
+    if (flag1 == _TRUE_)
+      pba->alpha_idm_iv = param1;
+    
+    if (flag2 == _TRUE_)
+      pba->beta_idm_iv = param2;   
+   
+  }
+
   /** - Test that the user have not specified Omega_scf = -1 but left either
       Omega_lambda or Omega_fld unspecified:*/
   class_test(((flag1 == _FALSE_)||(flag2 == _FALSE_)) && ((flag3 == _TRUE_) && (param3 < 0.)),
@@ -1337,6 +1428,11 @@ int input_read_parameters(
       }
     }
 
+  }
+
+  /* try to read fluid_equation_of_state*/
+  if (pba->Omega0_fld != 0. || pba->Omega0_idm_iv != 0.) {
+
     class_call(parser_read_string(pfc,"fluid_equation_of_state",&string1,&flag1,errmsg),
                errmsg,
                errmsg);
@@ -1351,7 +1447,15 @@ int input_read_parameters(
         pba->fluid_equation_of_state = EDE;
       }
 
-      else {
+      else if ((strstr(string1,"IDM_IV") != NULL) || (strstr(string1,"idm_iv") != NULL)) {
+	pba->fluid_equation_of_state = IDM_IV;
+	if (pba->Omega0_fld == 0.0)
+	  printf("Notice: Using 2-fluid IDM_IV \n");
+	else
+	  printf("Notice: Using 3-fluid IDM_IV \n");	
+      }
+
+      else if (pba->Omega0_fld != 0.){
         class_stop(errmsg,"incomprehensible input '%s' for the field 'fluid_equation_of_state'",string1);
       }
     }
@@ -1367,6 +1471,13 @@ int input_read_parameters(
       class_read_double("Omega_EDE",pba->Omega_EDE);
       class_read_double("cs2_fld",pba->cs2_fld);
     }
+
+    if (pba->fluid_equation_of_state == IDM_IV) {
+      class_read_double("w0_fld",pba->w0_fld);
+      class_read_double("cs2_fld",pba->cs2_fld);
+      pba->Omega0_fld += pba->Omega0_idm_iv + pba->Omega0_iv;
+    }
+
   }
 
   /* Additional SCF parameters: */
@@ -3177,6 +3288,8 @@ int input_default_params(
   pba->Omega0_idr = 0.0;
   pba->Omega0_idm_dr = 0.0;
   pba->T_idr = 0.0;
+  pba->Omega0_iv = 0.0;
+  pba->Omega0_idm_iv = 0.0;
   pba->Omega0_b = 0.022032/pow(pba->h,2);
   pba->Omega0_cdm = 0.12038/pow(pba->h,2);
   pba->Omega0_dcdmdr = 0.0;
@@ -3205,7 +3318,7 @@ int input_default_params(
   pba->Omega0_k = 0.;
   pba->K = 0.;
   pba->sgnK = 0;
-  pba->Omega0_lambda = 1.-pba->Omega0_k-pba->Omega0_g-pba->Omega0_ur-pba->Omega0_b-pba->Omega0_cdm-pba->Omega0_ncdm_tot-pba->Omega0_dcdmdr-pba->Omega0_idm_dr-pba->Omega0_idr;
+  pba->Omega0_lambda = 1.-pba->Omega0_k-pba->Omega0_g-pba->Omega0_ur-pba->Omega0_b-pba->Omega0_cdm-pba->Omega0_ncdm_tot-pba->Omega0_dcdmdr-pba->Omega0_idm_dr-pba->Omega0_idr-pba->Omega0_idm_iv-pba->Omega0_iv;
   pba->Omega0_fld = 0.;
   pba->a_today = 1.;
   pba->use_ppf = _TRUE_;
@@ -3215,6 +3328,8 @@ int input_default_params(
   pba->wa_fld = 0.;
   pba->Omega_EDE = 0.;
   pba->cs2_fld = 1.;
+  pba->alpha_idm_iv = 0.0;
+  pba->beta_idm_iv = 0.0;
 
   pba->shooting_failed = _FALSE_;
 

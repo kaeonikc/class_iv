@@ -7410,11 +7410,13 @@ int perturb_sources(
     if (ppt->has_source_delta_tot == _TRUE_)  {
 
       /** We follow the (debatable) CMBFAST/CAMB convention of not including rho_lambda in rho_tot */
+      rho_tot = pvecback[pba->index_bg_rho_tot];
       if (pba->has_lambda == _TRUE_){
-        rho_tot = pvecback[pba->index_bg_rho_tot] - pvecback[pba->index_bg_rho_lambda];
+        rho_tot -= pvecback[pba->index_bg_rho_lambda];
       }
-      else{
-        rho_tot = pvecback[pba->index_bg_rho_tot];
+      /** We are also not including rho_iv in rho_tot as it is part of rho_lambda (see above) */
+      if (pba->has_idm_iv == _TRUE_){
+        rho_tot -= pvecback[pba->index_bg_rho_iv];
       }
 
       _set_source_(ppt->index_tp_delta_tot) = ppw->delta_rho/rho_tot
@@ -7438,6 +7440,9 @@ int perturb_sources(
       _set_source_(ppt->index_tp_delta_cdm) = y[ppw->pv->index_pt_delta_cdm]
         + 3.*a_prime_over_a*theta_over_k2; // N-body gauge correction
     }
+
+    /* delta_idm_iv */
+    // TODO
 
     /* delta_dcdm */
     if (ppt->has_source_delta_dcdm == _TRUE_) {

@@ -320,6 +320,25 @@ int background_functions(
     rho_m += pvecback[pba->index_bg_rho_cdm];
   }
 
+  if (pba->has_idm_iv == _TRUE_) {    
+
+    /* idm_iv */
+
+    double abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
+    double S = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
+    pvecback[pba->index_bg_rho_idm_iv] = ((abp3+S+(abp3-S)*pow(a_rel,S))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a_rel,S)-1)*pba->Omega0_iv)/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2);
+    rho_tot += pvecback[pba->index_bg_rho_idm_iv];
+    p_tot += 0.;
+    rho_m += pvecback[pba->index_bg_rho_idm_iv];
+
+    /* iv */
+
+    pvecback[pba->index_bg_rho_iv] = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv + pba->Omega0_iv)*(pow(a_rel,S)-1)-(pba->beta_idm_iv + 3 - S - (pba->beta_idm_iv + 3 + S)*pow(a_rel,S))*pba->Omega0_iv)/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2);
+    rho_tot += pvecback[pba->index_bg_rho_iv];
+    p_tot -= pvecback[pba->index_bg_rho_iv];
+
+  }
+
   /* dcdm */
   if (pba->has_dcdm == _TRUE_) {
     /* Pass value of rho_dcdm to output */
@@ -527,6 +546,7 @@ int background_w_fld(
   double dOmega_ede_over_da = 0.;
   double d2Omega_ede_over_da2 = 0.;
   double a_eq, Omega_r, Omega_m;
+  double abp3, S_iv, rho_iv, rho_idm_iv, rho_gamma;
 
   /** - first, define the function w(a) */
   switch (pba->fluid_equation_of_state) {
@@ -556,17 +576,22 @@ int background_w_fld(
     // w_ede(a) taken from eq. (11) in 1706.00730
     *w_fld = - dOmega_ede_over_da*a/Omega_ede/3./(1.-Omega_ede)+a_eq/3./(a+a_eq);
     break;
-  case IVE:
-    // here goes your code for w_fld
-    // TODO *w_fld = ...
-    // w_fld in two-fluid case
-    // rho_m_ive stands for pressureless-matter energy density interacting with vacuum energy ...UNDEFINED YET
-    // rho_v_ive is vacuum energy density interacting with pressureless-matter ...UNDEFINED YET
+  case IDM_IV:    
+    // w_fld in IDM_IV case (taken from eq. 51 in ...)
+    abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
+    // Define function S(a,b) = sqrt( (a+b+3)^2 - 4ab )
+    S_iv = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
+    // rho_idm_iv stands for pressureless-matter energy density interacting with vacuum energy (see background_functions for details)
+    rho_idm_iv = ((abp3+S_iv+(abp3-S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a / pba->a_today,S_iv)-1)*pba->Omega0_iv)/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
+    // rho_iv is vacuum energy density interacting with pressureless-matter (see background_functions for details)
+    rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv + pba->Omega0_iv)*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv)/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);;
+    // rho_gamma is the additional barotropic fluid with density rho_gamma = rho_fld - rho_idm_iv - rho_iv and pressure P = w0 rho_gamma
+    rho_gamma = (pba->Omega0_fld - pba->Omega0_idm_iv - pba->Omega0_iv) * pow(pba->H0,2) / pow(a / pba->a_today,3*(1.+ pba->w0_fld));
+
     // w_fld here is the effective (overall) equation od state
-    *w_fld = - rho_v_ive / (rho_m_ive + rho_v_ive) // Omega_ive still needs to be defined
+    *w_fld = (- rho_iv + rho_gamma * pba->w0_fld) / (rho_idm_iv + rho_iv + rho_gamma);
     break;
   }
-
 
   /** - then, give the corresponding analytic derivative dw/da (used
       by perturbation equations; we could compute it numerically,
@@ -584,12 +609,11 @@ int background_w_fld(
       + dOmega_ede_over_da*dOmega_ede_over_da*a/3./(1.-Omega_ede)/(1.-Omega_ede)/Omega_ede
       + a_eq/3./(a+a_eq)/(a+a_eq);
     break;
-  case IVE:
-    // TODO *dw_over_da_fld = ...
-    // alpha_ive and beta_ive are interation parameters according to the model, UNDEFINED YET
-    // Q = alpha_ive * H * rho_m_ive + beta_ive * H * rho_v_ive
-    *dw_over_da_fld = (- alpha_ive * power(rho_m_ive, 2.) - beta_ive * power(rho_v_ive, 2.) 
-      - (alpha_ive + beta_ive + 3.) * rho_m_ive * rho_v_ive )/a
+  case IDM_IV:
+    // alpha_idm_iv and beta_idm_iv are interation parameters according to the model
+    // Q = alpha_iv * H * rho_m_iv + beta_iv * H * rho_v_iv
+    // TODO calculate for more general 3-fluid case
+    // *dw_over_da_fld = (- pba->alpha_idm_iv * power(rho_idm_iv, 2.) - pba->beta_idm_iv * power(rho_iv, 2.) - (pba->alpha_idm_iv + pba->beta_idm_iv + 3.) * rho_idm_iv * rho_iv )/a
     break;
   }
 
@@ -610,15 +634,12 @@ int background_w_fld(
   case EDE:
     class_stop(pba->error_message,"EDE implementation not finished: to finish it, read the comments in background.c just before this line\n");
     break;
-  case IVE:
-    // TODO *integral_fld = ... 
-    // Define function S(a,b) = sqrt( (a+b+3)^2 - 4ab ), needs to decrare funct_S_ive  
-    funct_S_ive = sqrt( pow(alpha_ive + beta_ive + 3., 2.) - 4. * alpha_ive * beta_ive ) 
-
+  case IDM_IV:
     // Exact solution of integrate w da 
-    // Assumming the Friedmann constraint Om + Ov = 1
-    // *integral_fld = (2.*alpha_ive * Omega_m + (alpha_ive + beta_ive +3. - funct_S_ive) * (1.-Omega_m) )*log(a) / 
-    //  ( (beta_ive - alpha_ive + funct_S_ive) + 6. * Omega_m - 3. ) + ... 
+    // Assumming the Friedmann constraint Om + Ov = 1 (necessary?)
+    // TODO *integral_fld = (2.*alpha_ive * Omega_m + (alpha_ive + beta_ive +3. - S_iv) * (1.-Omega_m) )*log(a) / 
+    //  ( (beta_ive - alpha_ive + S_iv) + 6. * Omega_m - 3. ) + ... 
+    class_stop(pba->error_message,"IV implementation not finished: to finish it, read the comments in background.c just before this line\n");
     break;
   }
 
@@ -911,6 +932,7 @@ int background_indices(
   pba->has_ur = _FALSE_;
   pba->has_idr = _FALSE_;
   pba->has_idm_dr = _FALSE_;
+  pba->has_idm_iv = _FALSE_;
   pba->has_curvature = _FALSE_;
 
   if (pba->Omega0_cdm != 0.)
@@ -942,6 +964,9 @@ int background_indices(
 
   if (pba->Omega0_idm_dr != 0.)
     pba->has_idm_dr = _TRUE_;
+
+  if (pba->Omega0_idm_iv !=0. && (pba->Omega0_fld == 0. || pba->fluid_equation_of_state != IDM_IV ))
+    pba->has_idm_iv = _TRUE_;
 
   if (pba->sgnK != 0)
     pba->has_curvature = _TRUE_;
@@ -1019,6 +1044,12 @@ int background_indices(
 
   /* - index for interacting dark matter */
   class_define_index(pba->index_bg_rho_idm_dr,pba->has_idm_dr,index_bg,1);
+
+  /* - index interacting for interacting vacuum */
+  class_define_index(pba->index_bg_rho_iv,pba->has_idm_iv,index_bg,1);
+
+  /* - index for interacting dark matter with iv */
+  class_define_index(pba->index_bg_rho_idm_iv,pba->has_idm_iv,index_bg,1);
 
   /* - put here additional ingredients that you want to appear in the
      normal vector */
@@ -2348,6 +2379,8 @@ int background_output_data(
     class_store_double(dataptr,pvecback[pba->index_bg_rho_ur],pba->has_ur,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_idr],pba->has_idr,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_idm_dr],pba->has_idm_dr,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_rho_iv],pba->has_idm_iv,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_rho_idm_iv],pba->has_idm_iv,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_crit],_TRUE_,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_dcdm],pba->has_dcdm,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_dr],pba->has_dr,storeidx);

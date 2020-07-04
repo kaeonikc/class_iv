@@ -612,8 +612,11 @@ int background_w_fld(
   case IDM_IV:
     // alpha_idm_iv and beta_idm_iv are interation parameters according to the model
     // Q = alpha_iv * H * rho_m_iv + beta_iv * H * rho_v_iv
-    // TODO calculate for more general 3-fluid case
+    // overall equation of state for 2-fluid case
     // *dw_over_da_fld = (- pba->alpha_idm_iv * power(rho_idm_iv, 2.) - pba->beta_idm_iv * power(rho_iv, 2.) - (pba->alpha_idm_iv + pba->beta_idm_iv + 3.) * rho_idm_iv * rho_iv )/a
+    // overall equation of state for 3-fluid case
+    *dw_over_da_fld = -1./a_rel * (pba->alpha_idm_iv * rho_idm_iv + pba->beta_idm_iv * rho_iv - 3.*(1.+pba->w0_fld)*pba->w0_fld * rho_gamma 
+      + 3.*(rho_iv-pba->rho_gamma) * ( rho_idm_iv + (1.+pba->w0_fld)*rho_gamma )/(rho_idm_iv + rho_iv + rho_gamma) ) 
     break;
   }
 

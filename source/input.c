@@ -1355,6 +1355,12 @@ int input_read_parameters(
     Omega_tot);
   */
 
+  /** - Test that the user have not specified Omega_scf = -1 but left either
+      Omega_lambda or Omega_fld unspecified:*/
+  class_test(((flag1 == _FALSE_)||(flag2 == _FALSE_)) && ((flag3 == _TRUE_) && (param3 < 0.)),
+             errmsg,
+             "It looks like you want to fulfil the closure relation sum Omega = 1 using the scalar field, so you have to specify both Omega_lambda and Omega_fld in the .ini file");
+
    /** - Omega_iv (fraction of vacuum/lambda interacting with (dark) matter) */
   class_call(parser_read_double(pfc,"f_iv",&param1,&flag1,errmsg),
              errmsg,
@@ -1401,12 +1407,6 @@ int input_read_parameters(
       pba->beta_idm_iv = param2;   
    
   }
-
-  /** - Test that the user have not specified Omega_scf = -1 but left either
-      Omega_lambda or Omega_fld unspecified:*/
-  class_test(((flag1 == _FALSE_)||(flag2 == _FALSE_)) && ((flag3 == _TRUE_) && (param3 < 0.)),
-             errmsg,
-             "It looks like you want to fulfil the closure relation sum Omega = 1 using the scalar field, so you have to specify both Omega_lambda and Omega_fld in the .ini file");
 
   if (pba->Omega0_fld != 0.) {
 

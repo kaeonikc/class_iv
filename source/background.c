@@ -584,7 +584,7 @@ int background_w_fld(
     // rho_idm_iv stands for pressureless-matter energy density interacting with vacuum energy (see background_functions for details)
     rho_idm_iv = ((abp3+S_iv+(abp3-S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a / pba->a_today,S_iv)-1)*pba->Omega0_iv *pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
     // rho_iv is vacuum energy density interacting with pressureless-matter (see background_functions for details)
-		rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv + pba->Omega0_iv *pow(pba->H0,2))*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv)/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);;
+		rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv *pow(pba->H0,2))*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv * pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);;
     // rho_gamma is the additional barotropic fluid with density rho_gamma = rho_fld - rho_idm_iv - rho_iv and pressure P = w0 rho_gamma
     rho_gamma = (pba->Omega0_fld - pba->Omega0_idm_iv - pba->Omega0_iv) * pow(pba->H0,2) / pow(a / pba->a_today,3*(1.+ pba->w0_fld));
 

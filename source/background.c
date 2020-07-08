@@ -80,6 +80,9 @@
 
 #include "background.h"
 
+// math integration library
+#include <gsl/gsl_integration.h>
+
 /**
  * Background quantities at given conformal time tau.
  *
@@ -521,6 +524,25 @@ int background_functions(
 
 }
 
+double w_iv_integrand ( double a, void * params) {
+        double abp3, S_iv, rho_iv, rho_idm_iv, rho_gamma, w_fld;
+        struct background *pba = (struct background *) params;
+  
+          abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
+          // Define function S(a,b) = sqrt( (a+b+3)^2 - 4ab )
+          S_iv = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
+          // rho_idm_iv stands for pressureless-matter energy density interacting with vacuum energy (see background_functions for details)
+          rho_idm_iv = ((abp3+S_iv+(abp3-S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a / pba->a_today,S_iv)-1)*pba->Omega0_iv *pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
+          // rho_iv is vacuum energy density interacting with pressureless-matter (see background_functions for details)
+		      rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv *pow(pba->H0,2))*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv * pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
+          // rho_gamma is the additional barotropic fluid with density rho_gamma = rho_fld - rho_idm_iv - rho_iv and pressure P = w0 rho_gamma
+          rho_gamma = (pba->Omega0_fld - pba->Omega0_idm_iv - pba->Omega0_iv) * pow(pba->H0,2) / pow(a / pba->a_today,3*(1.+ pba->w0_fld));
+        
+        w_fld = (- rho_iv + rho_gamma * pba->w0_fld) / (rho_idm_iv + rho_iv + rho_gamma);
+
+        return (3. * (1. + w_fld) / a);
+      }
+
 /**
  * Single place where the fluid equation of state is
  * defined. Parameters of the function are passed through the
@@ -546,7 +568,8 @@ int background_w_fld(
   double dOmega_ede_over_da = 0.;
   double d2Omega_ede_over_da2 = 0.;
   double a_eq, Omega_r, Omega_m;
-  double abp3, S_iv, rho_iv, rho_idm_iv, rho_gamma;
+  double abp3, S_iv, rho_iv, rho_idm_iv, rho_gamma, result;
+  size_t neval;
 
   /** - first, define the function w(a) */
   switch (pba->fluid_equation_of_state) {
@@ -584,7 +607,7 @@ int background_w_fld(
     // rho_idm_iv stands for pressureless-matter energy density interacting with vacuum energy (see background_functions for details)
     rho_idm_iv = ((abp3+S_iv+(abp3-S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a / pba->a_today,S_iv)-1)*pba->Omega0_iv *pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
     // rho_iv is vacuum energy density interacting with pressureless-matter (see background_functions for details)
-		rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv *pow(pba->H0,2))*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv * pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);;
+		rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv *pow(pba->H0,2))*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv * pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
     // rho_gamma is the additional barotropic fluid with density rho_gamma = rho_fld - rho_idm_iv - rho_iv and pressure P = w0 rho_gamma
     rho_gamma = (pba->Omega0_fld - pba->Omega0_idm_iv - pba->Omega0_iv) * pow(pba->H0,2) / pow(a / pba->a_today,3*(1.+ pba->w0_fld));
 
@@ -617,7 +640,7 @@ int background_w_fld(
     // overall equation of state for 3-fluid case
     *dw_over_da_fld = - (pba->alpha_idm_iv * rho_idm_iv + pba->beta_idm_iv * rho_iv + 3.*(1.+pba->w0_fld)*pba->w0_fld * rho_gamma 
       + 3.*(rho_iv-rho_gamma) * ( rho_idm_iv + (1.+pba->w0_fld)*rho_gamma )/(rho_idm_iv + rho_iv + rho_gamma) ) 
-      / (rho_idm_iv + rho_iv + rho_gamma) / ( a / pba->a_today)
+      / (rho_idm_iv + rho_iv + rho_gamma) / ( a / pba->a_today);
     break;
   }
 
@@ -643,6 +666,18 @@ int background_w_fld(
     if (rho_gamma == 0.) {
     // TODO *integral_fld = (2.*alpha_ive * Omega_m + (alpha_ive + beta_ive +3. - S_iv) * (1.-Omega_m) )*log(a) / 
     //  ( (beta_ive - alpha_ive + S_iv) + 6. * Omega_m - 3. ) + ... 
+ 
+    // Romberg integration for 3(1+w_fld)/a
+      gsl_integration_romberg_workspace * w = gsl_integration_romberg_alloc(20);
+
+      gsl_function F;
+      F.function = &w_iv_integrand;
+      F.params = pba;
+
+      gsl_integration_romberg( &w_iv_integrand, pba->a_today, a, 0., 1e-7, &result, &neval, w );
+
+      gsl_integration_romberg_free(w);
+
     } else {
       class_stop(pba->error_message,"IV implementation not finished: to finish it, read the comments in background.c just before this line\n");
     }

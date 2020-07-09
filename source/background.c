@@ -329,7 +329,7 @@ int background_functions(
 
     double abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
     double S = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
-    pvecback[pba->index_bg_rho_idm_iv] = ((abp3+S+(abp3-S)*pow(a_rel,S))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a_rel,S)-1)*pba->Omega0_iv *pow(pba->H0,2) )/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2);
+    pvecback[pba->index_bg_rho_idm_iv] = ((abp3+S+(abp3-S)*pow(a_rel,S))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a_rel,S)-1)*pba->Omega0_iv *pow(pba->H0,2) )/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2.);
     rho_tot += pvecback[pba->index_bg_rho_idm_iv];
     p_tot += 0.;
     rho_m += pvecback[pba->index_bg_rho_idm_iv];
@@ -339,6 +339,8 @@ int background_functions(
     pvecback[pba->index_bg_rho_iv] = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv + pba->Omega0_iv)*(pow(a_rel,S)-1)-(pba->beta_idm_iv + 3 - S - (pba->beta_idm_iv + 3 + S)*pow(a_rel,S))*pba->Omega0_iv *pow(pba->H0,2))/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2);
     rho_tot += pvecback[pba->index_bg_rho_iv];
     p_tot -= pvecback[pba->index_bg_rho_iv];
+
+    printf("a=%e S=%e rho_idm_iv+rho_iv=%e\n",a_rel,S,pvecback[pba->index_bg_rho_idm_iv]+pvecback[pba->index_bg_rho_iv]);
 
   }
 
@@ -591,6 +593,7 @@ int background_w_fld(
     Omega_r = pba->Omega0_g * (1. + 3.046 * 7./8.*pow(4./11.,4./3.)); // assumes LambdaCDM + eventually massive neutrinos so light that they are relativistic at equality; needs to be generalised later on.
     Omega_m = pba->Omega0_b;
     if (pba->has_cdm == _TRUE_) Omega_m += pba->Omega0_cdm;
+    if (pba->has_idm_iv == _TRUE_) Omega_m += pba->Omega0_idm_iv;
     if (pba->has_idm_dr == _TRUE_) Omega_m += pba->Omega0_idm_dr;
     if (pba->has_dcdm == _TRUE_)
       class_stop(pba->error_message,"Early Dark Energy not compatible with decaying Dark Matter because we omitted to code the calculation of a_eq in that case, but it would not be difficult to add it if necessary, should be a matter of 5 minutes");
@@ -674,7 +677,7 @@ int background_w_fld(
       F.function = &w_iv_integrand;
       F.params = pba;
 
-      gsl_integration_romberg( &w_iv_integrand, pba->a_today, a, 0., 1e-7, &result, &neval, w );
+      gsl_integration_romberg( &F, pba->a_today, a, 0., 1e-7, &result, &neval, w );
 
       *integral_fld = result;
 
@@ -1008,8 +1011,11 @@ int background_indices(
   if (pba->Omega0_idm_dr != 0.)
     pba->has_idm_dr = _TRUE_;
 
-  if (pba->Omega0_idm_iv !=0. && (pba->Omega0_fld == 0. || pba->fluid_equation_of_state != IDM_IV ))
+  if (pba->Omega0_idm_iv !=0. && (pba->Omega0_fld == 0. || pba->fluid_equation_of_state != IDM_IV )){
+    printf("HAS idm_ivi \n");
     pba->has_idm_iv = _TRUE_;
+  } else 
+    printf("NOT HAS idm	_iv Omega0_idm_iv=%e Omega0_fld=%e fluid_eos=%d\n",pba->Omega0_idm_iv,pba->Omega0_fld,pba->fluid_equation_of_state);
 
   if (pba->sgnK != 0)
     pba->has_curvature = _TRUE_;
@@ -2722,6 +2728,10 @@ int background_output_budget(
       _class_print_species_("Cold Dark Matter",cdm);
       budget_matter+=pba->Omega0_cdm;
     }
+    if(pba->has_idm_iv){
+      _class_print_species_("Interacting Dark Matter - IV",idm_iv);
+      budget_matter+=pba->Omega0_idm_iv;
+    }
     if(pba->has_idm_dr){
       _class_print_species_("Interacting Dark Matter - DR ",idm_dr);
       budget_matter+=pba->Omega0_idm_dr;
@@ -2758,12 +2768,16 @@ int background_output_budget(
       }
     }
 
-    if(pba->has_lambda || pba->has_fld || pba->has_scf || pba->has_curvature){
+    if(pba->has_lambda || pba->has_idm_iv || pba->has_fld || pba->has_scf || pba->has_curvature){
       printf(" ---> Other Content \n");
     }
     if(pba->has_lambda){
       _class_print_species_("Cosmological Constant",lambda);
       budget_other+=pba->Omega0_lambda;
+    }
+    if(pba->has_idm_iv){
+      _class_print_species_("Interacting vacuum",iv);
+      budget_other+=pba->Omega0_iv;
     }
     if(pba->has_fld){
       _class_print_species_("Dark Energy Fluid",fld);

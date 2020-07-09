@@ -676,6 +676,8 @@ int background_w_fld(
 
       gsl_integration_romberg( &w_iv_integrand, pba->a_today, a, 0., 1e-7, &result, &neval, w );
 
+      *integral_fld = result;
+
       gsl_integration_romberg_free(w);
 
     } else {

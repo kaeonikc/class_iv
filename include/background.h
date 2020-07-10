@@ -3,6 +3,8 @@
 #ifndef __BACKGROUND__
 #define __BACKGROUND__
 
+#include <gsl/gsl_integration.h>
+
 #include "common.h"
 #include "quadrature.h"
 #include "growTable.h"
@@ -13,6 +15,8 @@
 //The name for this macro can be at most 30 characters total
 #define _class_print_species_(name,type) \
 printf("-> %-30s Omega = %-15g , omega = %-15g\n",name,pba->Omega0_##type,pba->Omega0_##type*pba->h*pba->h);
+
+gsl_integration_romberg_workspace * work_rom;
 
 /** list of possible types of spatial curvature */
 

@@ -80,9 +80,6 @@
 
 #include "background.h"
 
-// math integration library
-#include <gsl/gsl_integration.h>
-
 /**
  * Background quantities at given conformal time tau.
  *
@@ -665,27 +662,18 @@ int background_w_fld(
     class_stop(pba->error_message,"EDE implementation not finished: to finish it, read the comments in background.c just before this line\n");
     break;
   case IDM_IV:
-    // Exact solution of integrate w da 
-    if (rho_gamma == 0.) {
-    // TODO *integral_fld = (2.*alpha_ive * Omega_m + (alpha_ive + beta_ive +3. - S_iv) * (1.-Omega_m) )*log(a) / 
-    //  ( (beta_ive - alpha_ive + S_iv) + 6. * Omega_m - 3. ) + ... 
- 
+    // integrate w da 
+    printf("integrating romberg a=%e \n", a/pba->a_today);
     // Romberg integration for 3(1+w_fld)/a
-      gsl_integration_romberg_workspace * w = gsl_integration_romberg_alloc(20);
 
-      gsl_function F;
-      F.function = &w_iv_integrand;
-      F.params = pba;
+    gsl_function F;
+    F.function = &w_iv_integrand;
+    F.params = pba;
 
-      gsl_integration_romberg( &F, pba->a_today, a, 0., 1e-7, &result, &neval, w );
+    gsl_integration_romberg( &F, pba->a_today, a, 0., 1e-2, &result, &neval, work_rom );
 
-      *integral_fld = result;
+    *integral_fld = result;
 
-      gsl_integration_romberg_free(w);
-
-    } else {
-      class_stop(pba->error_message,"IV implementation not finished: to finish it, read the comments in background.c just before this line\n");
-    }
     break;
   }
 
@@ -785,6 +773,7 @@ int background_init(
       printf(" -> total N_eff = %g (sumed over ultra-relativistic species, ncdm and dark radiation)\n",Neff);
 
     }
+
   }
 
   /** - if shooting failed during input, catch the error here */
@@ -798,6 +787,11 @@ int background_init(
   class_call(background_indices(pba),
              pba->error_message,
              pba->error_message);
+
+  if (pba->fluid_equation_of_state == IDM_IV) {
+      work_rom = gsl_integration_romberg_alloc(20);
+      printf("integration workspace allocated!\n");
+  }
 
   /* fluid equation of state */
   if (pba->has_fld == _TRUE_) {
@@ -861,6 +855,10 @@ int background_init(
 int background_free(
                     struct background *pba
                     ) {
+
+  if (pba->fluid_equation_of_state == IDM_IV) {
+      gsl_integration_romberg_free(work_rom);
+  }
 
   class_call(background_free_noinput(pba),
               pba->error_message,

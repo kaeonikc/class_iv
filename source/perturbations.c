@@ -8735,8 +8735,9 @@ int perturb_derivs(double tau,
       /** - ----> synchronous gauge: idm_iv density only (velocity set to zero by definition of the gauge) */
 
       if (ppt->gauge == synchronous) {
-        dy[pv->index_pt_delta_idm_iv] = -metric_continuity + pv->index_pt_delta_idm_iv / pba->index_bg_rho_idm_iv * 
-          (pba->alpha_idm_iv * pvecback[pba->index_bg_H] * pba->index_bg_rho_idm_iv + pba->beta_idm_iv * pvecback[pba->index_bg_H] * pba->index_bg_rho_iv) ;  
+        dy[pv->index_pt_delta_idm_iv] = -metric_continuity + pv->index_pt_delta_idm_iv / pvecback[pba->index_bg_rho_idm_iv] * 
+          (pba->alpha_idm_iv * pvecback[pba->index_bg_H] * pvecback[pba->index_bg_rho_idm_iv] + 
+          pba->beta_idm_iv * pvecback[pba->index_bg_H] * pvecback[pba->index_bg_rho_iv]) ;  
           // The interaction Q is specified in the last term in the parentheses above /* idm_iv density */
       }
     }

@@ -1259,6 +1259,9 @@ int perturb_indices_of_perturbs(
       class_define_index(ppt->index_tp_delta_ur,   ppt->has_source_delta_ur,  index_type,1);
       class_define_index(ppt->index_tp_delta_idr,  ppt->has_source_delta_idr, index_type,1);
       class_define_index(ppt->index_tp_delta_idm_dr,  ppt->has_source_delta_idm_dr, index_type,1);
+
+      class_define_index(ppt->index_tp_delta_idm_iv, ppt->has_source_delta_idm_iv, index_type,1); // idm_iv
+      
       class_define_index(ppt->index_tp_delta_ncdm1,ppt->has_source_delta_ncdm,index_type,pba->N_ncdm);
       class_define_index(ppt->index_tp_theta_m,    ppt->has_source_theta_m,   index_type,1);
       class_define_index(ppt->index_tp_theta_cb,   ppt->has_source_theta_cb,  index_type,1);
@@ -8367,6 +8370,9 @@ int perturb_derivs(double tau,
 
   double Sinv=0., dmu_idm_dr=0., dmu_idr=0., tca_slip_idm_dr=0.;
 
+  /* for use with interacting vacuum energy */
+  double alpha_idm_iv, beta_idm_iv;
+
   /** - rename the fields of the input structure (just to avoid heavy notations) */
 
   pppaw = parameters_and_workspace;
@@ -8709,6 +8715,29 @@ int perturb_derivs(double tau,
 
       if (ppt->gauge == synchronous) {
         dy[pv->index_pt_delta_cdm] = -metric_continuity; /* cdm density */
+      }
+    }
+
+    /** - ---> idm_iv */
+
+    if (pba->has_idm_iv == _TRUE_) {
+
+      /** - ----> newtonian gauge: idm_iv density  */
+
+      if (ppt->gauge == newtonian) {
+
+        class_stop(pba->error_message,"IDM IV implementation not supporting newtonian gauge (yet)\n");
+        // dy[pv->index_pt_delta_cdm] = -(y[pv->index_pt_theta_cdm]+metric_continuity); /* cdm density */
+
+        // dy[pv->index_pt_theta_cdm] = - a_prime_over_a*y[pv->index_pt_theta_cdm] + metric_euler; /* cdm velocity */
+      }
+
+      /** - ----> synchronous gauge: idm_iv density only (velocity set to zero by definition of the gauge) */
+
+      if (ppt->gauge == synchronous) {
+        dy[pv->index_pt_delta_idm_iv] = -metric_continuity + pv->index_pt_delta_idm_iv / pba->index_bg_rho_idm_iv * 
+          (pba->alpha_idm_iv * pvecback[pba->index_bg_H] * pba->index_bg_rho_idm_iv + pba->beta_idm_iv * pvecback[pba->index_bg_H] * pba->index_bg_rho_iv) ;  
+          // The interaction Q is specified in the last term in the parentheses above /* idm_iv density */
       }
     }
 

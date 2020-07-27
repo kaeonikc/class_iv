@@ -33,7 +33,7 @@ AR        = ar rv
 PYTHON ?= python
 
 # your optimization flag
-OPTFLAG = -O3 #-ffast-math #-march=native
+OPTFLAG = -O2 #-ffast-math #-march=native
 #OPTFLAG = -Ofast -ffast-math #-march=native
 #OPTFLAG = -fast
 
@@ -44,6 +44,7 @@ OMPFLAG   = -fopenmp
 
 # all other compilation flags
 CCFLAG = -g -fPIC
+LDFLAG = -g -fPIC
 LDFLAG = -g -fPIC -lgsl -lgslcblas
 
 # leave blank to compile without HyRec, or put path to HyRec directory
@@ -192,7 +193,11 @@ ifdef OMPFLAG
 else
 	grep -v "lgomp" python/setup.py > python/autosetup.py
 endif
+ifdef PREFIX
+	cd python; export CC=$(CC); $(PYTHON) autosetup.py install --prefix=$(PREFIX)
+else
 	cd python; export CC=$(CC); $(PYTHON) autosetup.py install || $(PYTHON) autosetup.py install --user
+endif
 	rm python/autosetup.py
 
 clean: .base

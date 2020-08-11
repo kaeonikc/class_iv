@@ -325,15 +325,22 @@ int background_functions(
     /* idm_iv */
 
     double abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
+    double ambp3 = pba->alpha_idm_iv - pba->beta_idm_iv + 3;
     double S = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
-    pvecback[pba->index_bg_rho_idm_iv] = ((abp3+S+(abp3-S)*pow(a_rel,S))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a_rel,S)-1)*pba->Omega0_iv *pow(pba->H0,2) )/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2.);
+    //pvecback[pba->index_bg_rho_idm_iv] = ((abp3+S+(abp3-S)*pow(a_rel,S))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a_rel,S)-1)*pba->Omega0_iv *pow(pba->H0,2) )/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2.);
+    pvecback[pba->index_bg_rho_idm_iv] = ( ( (abp3 + S)*pba->Omega0_idm_iv*pow(pba->H0,2)/S/2.
+      + pba->beta_idm_iv * pba->Omega0_iv*pow(pba->H0,2)/S )*pow(a_rel,-S/2) - ( (abp3 - S)*pba->Omega0_idm_iv*pow(pba->H0,2)/S/2.
+      + pba->beta_idm_iv * pba->Omega0_iv*pow(pba->H0,2)/S )*pow(a_rel,S/2) ) * pow(a_rel, - ambp3/2);
     rho_tot += pvecback[pba->index_bg_rho_idm_iv];
     p_tot += 0.;
     rho_m += pvecback[pba->index_bg_rho_idm_iv];
 
     /* iv */
 
-    pvecback[pba->index_bg_rho_iv] = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv * pow(pba->H0,2) )*(pow(a_rel,S)-1)-(pba->beta_idm_iv + 3 - S - (pba->beta_idm_iv + 3 + S)*pow(a_rel,S))*pba->Omega0_iv *pow(pba->H0,2))/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2);
+    //pvecback[pba->index_bg_rho_iv] = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv * pow(pba->H0,2) )*(pow(a_rel,S)-1)-(pba->beta_idm_iv + 3 - S - (pba->beta_idm_iv + 3 + S)*pow(a_rel,S))*pba->Omega0_iv *pow(pba->H0,2))/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2);
+    pvecback[pba->index_bg_rho_iv] = ( ( pba->alpha_idm_iv * pba->Omega0_idm_iv*pow(pba->H0,2)/S
+           + (abp3 + S)*pba->Omega0_iv*pow(pba->H0,2)/S/2. ) * pow(a_rel,S/2) - ( pba->alpha_idm_iv * pba->Omega0_idm_iv*pow(pba->H0,2)/S
+           + (abp3 - S)*pba->Omega0_iv*pow(pba->H0,2)/S/2. ) * pow(a_rel,-S/2)) * pow(a_rel,-ambp3/2);
     rho_tot += pvecback[pba->index_bg_rho_iv];
     p_tot -= pvecback[pba->index_bg_rho_iv];
 

@@ -1396,7 +1396,7 @@ int input_read_parameters(
              errmsg,
              errmsg);
 
-    class_call(parser_read_double(pfc,"beta_idm_iv",&param2,&flag1,errmsg),
+    class_call(parser_read_double(pfc,"beta_idm_iv",&param2,&flag2,errmsg),
              errmsg,
              errmsg);
 

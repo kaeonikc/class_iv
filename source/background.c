@@ -2540,6 +2540,9 @@ int background_derivs(
     rho_M += pvecback[pba->index_bg_rho_cdm];
   if (pba->has_idm_dr)
     rho_M += pvecback[pba->index_bg_rho_idm_dr];
+  
+  if (pba->has_idm_iv)
+    rho_M += pvecback[pba->index_bg_rho_idm_iv];
 
   dy[pba->index_bi_D] = y[pba->index_bi_D_prime];
   dy[pba->index_bi_D_prime] = -a*H*y[pba->index_bi_D_prime] + 1.5*a*a*rho_M*y[pba->index_bi_D];

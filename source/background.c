@@ -1973,7 +1973,7 @@ int background_solve(
       pvecback[pba->index_bg_D_idm_iv] = pData[i*pba->bi_size+pba->index_bi_D_idm_iv]/pData[(pba->bt_size-1)*pba->bi_size+pba->index_bi_D_idm_iv];
       pvecback[pba->index_bg_f_rsd] = pData[i*pba->bi_size+pba->index_bi_D_idm_iv_prime]/
         (pData[i*pba->bi_size+pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H])
-        - Q * pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_H]; // TODO: define the function Q
+        - Q_idm_iv * pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_H]; // TODO: define the function Q
     }
     /* -> write in the table */
     memcopy_result = memcpy(pba->background_table + i*pba->bg_size,pvecback,pba->bg_size*sizeof(double));

@@ -1142,6 +1142,12 @@ int background_indices(
   /* -> velocity growth factor in dust universe */
   class_define_index(pba->index_bg_f,_TRUE_,index_bg,1);
 
+  /* -> density growth factor for interacting vacuum */
+  class_define_index(pba->index_bg_D_idm_iv,_TRUE_,index_bg,1);
+
+  /* -> peculiar velocity growth factor (modified growth rate) */
+  class_define_index(pba->index_bg_f_rsd,_TRUE_,index_bg,1);
+
   /* -> put here additional quantities describing background */
   /*    */
   /*    */
@@ -1182,6 +1188,10 @@ int background_indices(
   /* -> Second order equation for growth factor */
   class_define_index(pba->index_bi_D,_TRUE_,index_bi,1);
   class_define_index(pba->index_bi_D_prime,_TRUE_,index_bi,1);
+
+  /* -> Second order equation for growth factor for idm_iv */
+  class_define_index(pba->index_bi_D_idm_iv,_TRUE_,index_bi,1);
+  class_define_index(pba->index_bi_D_idm_iv_prime,_TRUE_,index_bi,1);
 
   /* -> index for conformal time in vector of variables to integrate */
   class_define_index(pba->index_bi_tau,_TRUE_,index_bi,1);
@@ -1958,6 +1968,13 @@ int background_solve(
     pvecback[pba->index_bg_f] = pData[i*pba->bi_size+pba->index_bi_D_prime]/
       (pData[i*pba->bi_size+pba->index_bi_D]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H]);
 
+    /* Normalise D(z=0)=1 and construct f_rsd = D_prime/(aHD) - Q rho_idm/H for idm_iv model */
+    if (pba->has_idm_iv == _TRUE_){
+      pvecback[pba->index_bg_D_idm_iv] = pData[i*pba->bi_size+pba->index_bi_D_idm_iv]/pData[(pba->bt_size-1)*pba->bi_size+pba->index_bi_D_idm_iv];
+      pvecback[pba->index_bg_f_rsd] = pData[i*pba->bi_size+pba->index_bi_D_idm_iv_prime]/
+        (pData[i*pba->bi_size+pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H])
+        - Q * pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_H]; // TODO: define the function Q
+    }
     /* -> write in the table */
     memcopy_result = memcpy(pba->background_table + i*pba->bg_size,pvecback,pba->bg_size*sizeof(double));
 
@@ -2254,6 +2271,13 @@ int background_initial_conditions(
   pvecback_integration[pba->index_bi_D] = a;
   pvecback_integration[pba->index_bi_D_prime] = 2*pvecback_integration[pba->index_bi_D]*pvecback[pba->index_bg_H];
 
+  /** - set initial value of D and D' in RD for idm_iv. D will be renormalised later, but D' must be correct. */
+  // TODO: check if this initial condition is valid for interacting vacuum case
+  if (pba->has_idm_iv == _TRUE_){
+    pvecback_integration[pba->index_bi_D_idm_iv] = a; 
+    pvecback_integration[pba->index_bi_D_idm_iv_prime] = 2*pvecback_integration[pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_H];
+  }
+
   return _SUCCESS_;
 
 }
@@ -2460,6 +2484,9 @@ int background_output_data(
 
     class_store_double(dataptr,pvecback[pba->index_bg_D],_TRUE_,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_f],_TRUE_,storeidx);
+
+    class_store_double(dataptr,pvecback[pba->index_bg_D_idm_iv],_TRUE_,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_f_rsd],_TRUE_,storeidx);
   }
 
   return _SUCCESS_;
@@ -2506,7 +2533,7 @@ int background_derivs(
 
   struct background_parameters_and_workspace * pbpaw;
   struct background * pba;
-  double * pvecback, a, H, rho_M;
+  double * pvecback, a, H, rho_M, rho_IDM;
 
   pbpaw = parameters_and_workspace;
   pba =  pbpaw->pba;
@@ -2541,9 +2568,16 @@ int background_derivs(
   if (pba->has_idm_dr)
     rho_M += pvecback[pba->index_bg_rho_idm_dr];
   
-  if (pba->has_idm_iv)
+  if (pba->has_idm_iv) {
     rho_M += pvecback[pba->index_bg_rho_idm_iv];
+    rho_IDM = pvecback[pba->index_bg_rho_idm_iv];
 
+    dy[pba->index_bi_D_idm_iv] = y[pba->index_bi_D_idm_iv_prime];
+    dy[pba->index_bi_D_idm_iv_prime] = -a*(H-Q_idm_iv/rho_IDM)*y[pba->index_bi_D_idm_iv_prime]
+      + (1.5*a*a*rho_IDM + a*Q_idm_iv_prime/rho_IDM + 5.*a*a*H*Q_idm_iv/rho_IDM + a*a*Q_idm_iv*Q_idm_iv/rho_IDM/rho_IDM)*y[pba->index_bi_D_idm_iv];
+      // TODO: define Q_idm_iv and Q_idm_iv_prime
+  }
+  
   dy[pba->index_bi_D] = y[pba->index_bi_D_prime];
   dy[pba->index_bi_D_prime] = -a*H*y[pba->index_bi_D_prime] + 1.5*a*a*rho_M*y[pba->index_bi_D];
 

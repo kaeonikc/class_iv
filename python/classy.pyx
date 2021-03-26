@@ -1199,6 +1199,36 @@ cdef class Class:
 
         return f
 
+    def scale_independent_growth_factor_f_rsd(self, z):
+        """
+        scale_independent_growth_factor_f_rsd(z)
+
+        Return the scale invariant growth factor f_rsd(z)=d ln D / d ln a  -  Q/H/rho_idm_iv for interacting CDM-vacuum perturbations
+        (exactly, the quantity defined by Class as index_bg_f_rsd in the background module)
+
+        Parameters
+        ----------
+        z : float
+                Desired redshift
+        """
+        cdef double tau
+        cdef int last_index #junk
+        cdef double * pvecback
+
+        pvecback = <double*> calloc(self.ba.bg_size,sizeof(double))
+
+        if background_tau_of_z(&self.ba,z,&tau)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if background_at_tau(&self.ba,tau,self.ba.long_info,self.ba.inter_normal,&last_index,pvecback)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        f = pvecback[self.ba.index_bg_f_rsd]
+
+        free(pvecback)
+
+        return f
+
     def z_of_tau(self, tau):
         """
         Redshift corresponding to a given conformal time.

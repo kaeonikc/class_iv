@@ -296,7 +296,7 @@ struct background
   int index_bi_D_prime; /**< {C} D satisfies \f$ [D''(\tau)=-aHD'(\tau)+3/2 a^2 \rho_M D(\tau) \f$ */
 
   int index_bi_D_idm_iv;       /**< {C} scale independent growth factor D_idm_iv(a) for interacting CDM-vacuum perturbations. */
-  int index_bi_D_idm_iv_prime; /**< {C} D satisfies the derivative of D_idm_iv(a) */
+  int index_bi_D_prime_idm_iv; /**< {C} D satisfies the derivative of D_idm_iv(a) */
 
   int bi_B_size;        /**< Number of {B} parameters */
   int bi_size;          /**< Number of {B}+{C} parameters */

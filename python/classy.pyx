@@ -1223,11 +1223,11 @@ cdef class Class:
         if background_at_tau(&self.ba,tau,self.ba.long_info,self.ba.inter_normal,&last_index,pvecback)==_FAILURE_:
             raise CosmoSevereError(self.ba.error_message)
 
-        f = pvecback[self.ba.index_bg_f_rsd]
+        f_rsd = pvecback[self.ba.index_bg_f_rsd]
 
         free(pvecback)
 
-        return f
+        return f_rsd
 
     def z_of_tau(self, tau):
         """

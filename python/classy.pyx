@@ -1199,6 +1199,36 @@ cdef class Class:
 
         return f
 
+    def scale_independent_growth_factor_D_idm_iv(self, z):
+        """
+        scale_independent_growth_factor(z)
+
+        Return the scale invariant growth factor D_idm_iv(a) for CDM perturbations in interacting vacuum-cdm scenario
+        (exactly, the quantity defined by Class as index_bg_D_idm_iv in the background module)
+
+        Parameters
+        ----------
+        z : float
+                Desired redshift
+        """
+        cdef double tau
+        cdef int last_index #junk
+        cdef double * pvecback
+
+        pvecback = <double*> calloc(self.ba.bg_size,sizeof(double))
+
+        if background_tau_of_z(&self.ba,z,&tau)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if background_at_tau(&self.ba,tau,self.ba.long_info,self.ba.inter_normal,&last_index,pvecback)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        D = pvecback[self.ba.index_bg_D_idm_iv]
+
+        free(pvecback)
+
+        return D
+        
     def scale_independent_growth_factor_f_rsd(self, z):
         """
         scale_independent_growth_factor_f_rsd(z)

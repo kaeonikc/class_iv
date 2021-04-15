@@ -1978,7 +1978,9 @@ int background_solve(
     /* Normalise D(z=0)=1 and construct f_rsd = D_prime/(aHD) - Q rho_idm/H for idm_iv model */
     if (pba->has_idm_iv == _TRUE_){
       pvecback[pba->index_bg_D_idm_iv] = pData[i*pba->bi_size+pba->index_bi_D_idm_iv]/pData[(pba->bt_size-1)*pba->bi_size+pba->index_bi_D_idm_iv];
-      pvecback[pba->index_bg_f_rsd] = pvecback[pba->index_bg_f] - Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_H];
+      pvecback[pba->index_bg_f_rsd] = pData[i*pba->bi_size+pba->index_bi_D_prime_idm_iv]/
+      (pData[i*pba->bi_size+pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H]) 
+      - Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_H];
     }
     /* -> write in the table */
     memcopy_result = memcpy(pba->background_table + i*pba->bg_size,pvecback,pba->bg_size*sizeof(double));
@@ -2582,12 +2584,12 @@ int background_derivs(
     rho_M += pvecback[pba->index_bg_rho_idm_iv];
     // rho_IDM = pvecback[pba->index_bg_rho_idm_iv];
     Q_idm_iv = pba->alpha_idm_iv*H*pvecback[pba->index_bg_rho_idm_iv] + pba->beta_idm_iv*H*pvecback[pba->index_bg_rho_iv];
-    Q_prime_idm_iv = Q_idm_iv*H_prime/H + pba->alpha_idm_iv*H*(-3.*a*H*pvecback[pba->index_bg_rho_idm_iv] - a*Q_idm_iv) + pba->beta_idm_iv*a*Q_idm_iv;
+    Q_prime_idm_iv = Q_idm_iv*H_prime/H + pba->alpha_idm_iv*H*(-3.*a*H*pvecback[pba->index_bg_rho_idm_iv] - a*Q_idm_iv) + pba->beta_idm_iv*a*H*Q_idm_iv;
 
     dy[pba->index_bi_D_idm_iv] = y[pba->index_bi_D_prime_idm_iv];
     dy[pba->index_bi_D_prime_idm_iv] = -(a*H + a*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv])*y[pba->index_bi_D_prime_idm_iv] 
       + 1.5*a*a*rho_M*y[pba->index_bi_D_idm_iv] 
-      - (a*Q_prime_idm_iv/pvecback[pba->index_bg_rho_idm_iv] + 5.*a*a*H*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv] 
+      + (a*Q_prime_idm_iv/pvecback[pba->index_bg_rho_idm_iv] + 5.*a*a*H*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv] 
       + a*a*Q_idm_iv*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_rho_idm_iv]) * y[pba->index_bi_D_idm_iv];
       // TODO: define D_idm_iv and D_idm_iv_prime
   }

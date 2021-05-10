@@ -2275,14 +2275,19 @@ int background_initial_conditions(
   pvecback_integration[pba->index_bi_rs] = pvecback_integration[pba->index_bi_tau]/sqrt(3.);
 
   /** - set initial value of D and D' in RD. D will be renormalised later, but D' must be correct. */
+  /* Original CLASS' growth equation IC */
   pvecback_integration[pba->index_bi_D] = a;
   pvecback_integration[pba->index_bi_D_prime] = 2*pvecback_integration[pba->index_bi_D]*pvecback[pba->index_bg_H];
 
+  /** - NEW initial conditions (ref. Thomas Tram) */
+
+  // pvecback_integration[pba->index_bi_D] = 1. + 1.5*a*(pba->Omega0_b+pba->Omega0_idm_iv)/(pba->Omega0_g+pba->Omega0_ur);
+  // pvecback_integration[pba->index_bi_D_prime] = 1.5*a*a*pvecback[pba->index_bg_H]*(pba->Omega0_b+pba->Omega0_idm_iv)/(pba->Omega0_g+pba->Omega0_ur);
   /** - set initial value of D and D' in RD for idm_iv. D will be renormalised later, but D' must be correct. */
   // TODO: check if this initial condition for D' is valid for interacting vacuum case??
   if (pba->has_idm_iv == _TRUE_){
     pvecback_integration[pba->index_bi_D_idm_iv] = a; 
-    pvecback_integration[pba->index_bi_D_prime_idm_iv] = 2*pvecback_integration[pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_H];
+    pvecback_integration[pba->index_bi_D_prime_idm_iv] = 2*a*pvecback_integration[pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_H];
   }
 
   return _SUCCESS_;
@@ -2596,6 +2601,10 @@ int background_derivs(
 
   dy[pba->index_bi_D] = y[pba->index_bi_D_prime];
   dy[pba->index_bi_D_prime] = -a*H*y[pba->index_bi_D_prime] + 1.5*a*a*rho_M*y[pba->index_bi_D];
+  // dy[pba->index_bi_D_prime] = -(a*H + a*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv])*y[pba->index_bi_D_prime] 
+  //     + 1.5*a*a*rho_M*y[pba->index_bi_D] 
+  //     + (a*Q_prime_idm_iv/pvecback[pba->index_bg_rho_idm_iv] + 5.*a*a*H*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv] 
+  //     + a*a*Q_idm_iv*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_rho_idm_iv]) * y[pba->index_bi_D];
 
   if (pba->has_dcdm == _TRUE_){
     /** - compute dcdm density \f$ \rho' = -3aH \rho - a \Gamma \rho \f$*/

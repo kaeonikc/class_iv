@@ -2279,10 +2279,6 @@ int background_initial_conditions(
   pvecback_integration[pba->index_bi_D] = a;
   pvecback_integration[pba->index_bi_D_prime] = 2*pvecback_integration[pba->index_bi_D]*pvecback[pba->index_bg_H];
 
-  /** - NEW initial conditions (ref. Thomas Tram) */
-
-  // pvecback_integration[pba->index_bi_D] = 1. + 1.5*a*(pba->Omega0_b+pba->Omega0_idm_iv)/(pba->Omega0_g+pba->Omega0_ur);
-  // pvecback_integration[pba->index_bi_D_prime] = 1.5*a*a*pvecback[pba->index_bg_H]*(pba->Omega0_b+pba->Omega0_idm_iv)/(pba->Omega0_g+pba->Omega0_ur);
   /** - set initial value of D and D' in RD for idm_iv. D will be renormalised later, but D' must be correct. */
   // TODO: check if this initial condition for D' is valid for interacting vacuum case??
   if (pba->has_idm_iv == _TRUE_){
@@ -2548,7 +2544,7 @@ int background_derivs(
 
   struct background_parameters_and_workspace * pbpaw;
   struct background * pba;
-  double * pvecback, a, H, H_prime, rho_M, rho_IDM;
+  double * pvecback, a, H, H_prime, rho_M;
   double Q_idm_iv, Q_prime_idm_iv;
 
   pbpaw = parameters_and_workspace;
@@ -2587,7 +2583,7 @@ int background_derivs(
   
   if (pba->has_idm_iv) {
     rho_M += pvecback[pba->index_bg_rho_idm_iv];
-    // rho_IDM = pvecback[pba->index_bg_rho_idm_iv];
+    
     Q_idm_iv = pba->alpha_idm_iv*H*pvecback[pba->index_bg_rho_idm_iv] + pba->beta_idm_iv*H*pvecback[pba->index_bg_rho_iv];
     Q_prime_idm_iv = Q_idm_iv*H_prime/H + pba->alpha_idm_iv*H*(-3.*a*H*pvecback[pba->index_bg_rho_idm_iv] - a*Q_idm_iv) + pba->beta_idm_iv*a*H*Q_idm_iv;
 
@@ -2596,15 +2592,10 @@ int background_derivs(
       + 1.5*a*a*rho_M*y[pba->index_bi_D_idm_iv] 
       + (a*Q_prime_idm_iv/pvecback[pba->index_bg_rho_idm_iv] + 5.*a*a*H*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv] 
       + a*a*Q_idm_iv*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_rho_idm_iv]) * y[pba->index_bi_D_idm_iv];
-      // TODO: define D_idm_iv and D_idm_iv_prime
   }
 
   dy[pba->index_bi_D] = y[pba->index_bi_D_prime];
   dy[pba->index_bi_D_prime] = -a*H*y[pba->index_bi_D_prime] + 1.5*a*a*rho_M*y[pba->index_bi_D];
-  // dy[pba->index_bi_D_prime] = -(a*H + a*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv])*y[pba->index_bi_D_prime] 
-  //     + 1.5*a*a*rho_M*y[pba->index_bi_D] 
-  //     + (a*Q_prime_idm_iv/pvecback[pba->index_bg_rho_idm_iv] + 5.*a*a*H*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv] 
-  //     + a*a*Q_idm_iv*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_rho_idm_iv]) * y[pba->index_bi_D];
 
   if (pba->has_dcdm == _TRUE_){
     /** - compute dcdm density \f$ \rho' = -3aH \rho - a \Gamma \rho \f$*/

@@ -239,6 +239,9 @@ struct background
   int index_bg_D;             /**< scale independent growth factor D(a) for CDM perturbations */
   int index_bg_f;             /**< corresponding velocity growth factor [dlnD]/[dln a] */
 
+  int index_bg_D_idm_iv;      /**< scale independent growth factor D(a) for interacting CDM-vacuum perturbations */
+  int index_bg_f_rsd;         /**< corresponding peculiar velocity growth factor [dln D_idm_iv ]/[dln a] - Q rho_idm_iv / H */
+
   int bg_size_short;  /**< size of background vector in the "short format" */
   int bg_size_normal; /**< size of background vector in the "normal format" */
   int bg_size;        /**< size of background vector in the "long format" */
@@ -291,6 +294,9 @@ struct background
   int index_bi_tau;     /**< {C} conformal time in Mpc */
   int index_bi_D;       /**< {C} scale independent growth factor D(a) for CDM perturbations. */
   int index_bi_D_prime; /**< {C} D satisfies \f$ [D''(\tau)=-aHD'(\tau)+3/2 a^2 \rho_M D(\tau) \f$ */
+
+  int index_bi_D_idm_iv;       /**< {C} scale independent growth factor D_idm_iv(a) for interacting CDM-vacuum perturbations. */
+  int index_bi_D_prime_idm_iv; /**< {C} D satisfies the derivative of D_idm_iv(a) */
 
   int bi_B_size;        /**< Number of {B} parameters */
   int bi_size;          /**< Number of {B}+{C} parameters */

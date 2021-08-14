@@ -111,6 +111,9 @@ cdef class Class:
     property state:
         def __get__(self):
             return True
+    property is_computed:
+        def __get__(self):
+            return self.computed
     property Omega_nu:
         def __get__(self):
             return self.ba.Omega0_ncdm_tot
@@ -1746,6 +1749,14 @@ cdef class Class:
                 value = self.ba.Omega0_m
             elif name == 'omega_m':
                 value = self.ba.Omega0_m/self.ba.h**2
+            elif name == 'Omega_idm_iv':
+                value = self.ba.Omega0_idm_iv
+            elif name == 'omega_idm_iv':
+                value = self.ba.Omega0_idm_iv/self.ba.h**2
+            elif name == 'Omega_iv':
+                value = self.ba.Omega0_iv
+            elif name == 'omega_iv':
+                value = self.ba.Omega0_iv/self.ba.h**2
             elif name == 'xi_idr':
                 value = self.ba.T_idr/self.ba.T_cmb
             elif name == 'N_dg':

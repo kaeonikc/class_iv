@@ -344,7 +344,7 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_iv];
     p_tot -= pvecback[pba->index_bg_rho_iv];
 
-    printf("a=%e S=%e rho_idm_iv+rho_iv=%e\n",a_rel,S,pvecback[pba->index_bg_rho_idm_iv]+pvecback[pba->index_bg_rho_iv]);
+    // printf("a=%e S=%e rho_idm_iv+rho_iv=%e\n",a_rel,S,pvecback[pba->index_bg_rho_idm_iv]+pvecback[pba->index_bg_rho_iv]);
 
   }
 
@@ -1975,12 +1975,12 @@ int background_solve(
     pvecback[pba->index_bg_f] = pData[i*pba->bi_size+pba->index_bi_D_prime]/
       (pData[i*pba->bi_size+pba->index_bi_D]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H]);
 
-    /* Normalise D(z=0)=1 and construct f_rsd = D_prime/(aHD) - Q rho_idm/H for idm_iv model */
+    /* Normalise D(z=0)=1 and construct f_rsd = D_prime/(aHD) - Q / H /( rho_b + rho_idm) for interacting vacuum model */
     if (pba->has_idm_iv == _TRUE_){
       pvecback[pba->index_bg_D_idm_iv] = pData[i*pba->bi_size+pba->index_bi_D_idm_iv]/pData[(pba->bt_size-1)*pba->bi_size+pba->index_bi_D_idm_iv];
       pvecback[pba->index_bg_f_rsd] = pData[i*pba->bi_size+pba->index_bi_D_prime_idm_iv]/
       (pData[i*pba->bi_size+pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H]) 
-      - Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_H];
+      - Q_idm_iv / (pvecback[pba->index_bg_rho_b] + pvecback[pba->index_bg_rho_idm_iv]) / pvecback[pba->index_bg_H];
     }
     /* -> write in the table */
     memcopy_result = memcpy(pba->background_table + i*pba->bg_size,pvecback,pba->bg_size*sizeof(double));
@@ -2574,26 +2574,29 @@ int background_derivs(
   /** - calculate \f$ rs' = c_s \f$*/
   dy[pba->index_bi_rs] = 1./sqrt(3.*(1.+3.*pvecback[pba->index_bg_rho_b]/4./pvecback[pba->index_bg_rho_g]))*sqrt(1.-pba->K*y[pba->index_bi_rs]*y[pba->index_bi_rs]); // TBC: curvature correction
 
-  /** - solve second order growth equation  \f$ [D''(\tau)=-aHD'(\tau)+3/2 a^2 \rho_M D(\tau) \f$ */
+  /** - initialize to solve second order growth equation  */
   rho_M = pvecback[pba->index_bg_rho_b];
   if (pba->has_cdm)
     rho_M += pvecback[pba->index_bg_rho_cdm];
   if (pba->has_idm_dr)
     rho_M += pvecback[pba->index_bg_rho_idm_dr];
   
+  /** - solve second order growth equation in interacting vacuum */ 
+  /** \f$ [D''(\tau)=-a (H + Q/\rho_M) D'(\tau) + 3/2 a^2 \rho_M D(\tau) + (aQ' / \rho_M + 5a^2HQ / rho_M + a^2Q^2/rho_M^2) D(\tau) \f$ */
   if (pba->has_idm_iv) {
     rho_M += pvecback[pba->index_bg_rho_idm_iv];
     
+    /** model $Q = \alpha H \rho_{cdm} + \beta H \rho_{V}$ */
     Q_idm_iv = pba->alpha_idm_iv*H*pvecback[pba->index_bg_rho_idm_iv] + pba->beta_idm_iv*H*pvecback[pba->index_bg_rho_iv];
     Q_prime_idm_iv = Q_idm_iv*H_prime/H + pba->alpha_idm_iv*H*(-3.*a*H*pvecback[pba->index_bg_rho_idm_iv] - a*Q_idm_iv) + pba->beta_idm_iv*a*H*Q_idm_iv;
 
     dy[pba->index_bi_D_idm_iv] = y[pba->index_bi_D_prime_idm_iv];
-    dy[pba->index_bi_D_prime_idm_iv] = -(a*H + a*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv])*y[pba->index_bi_D_prime_idm_iv] 
+    dy[pba->index_bi_D_prime_idm_iv] = -(a*H + a*Q_idm_iv/rho_M)*y[pba->index_bi_D_prime_idm_iv] 
       + 1.5*a*a*rho_M*y[pba->index_bi_D_idm_iv] 
-      + (a*Q_prime_idm_iv/pvecback[pba->index_bg_rho_idm_iv] + 5.*a*a*H*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv] 
-      + a*a*Q_idm_iv*Q_idm_iv/pvecback[pba->index_bg_rho_idm_iv]/pvecback[pba->index_bg_rho_idm_iv]) * y[pba->index_bi_D_idm_iv];
+      + (a*Q_prime_idm_iv/rho_M + 5.*a*a*H*Q_idm_iv/rho_M + a*a*Q_idm_iv*Q_idm_iv/rho_M/rho_M) * y[pba->index_bi_D_idm_iv];
   }
 
+  /** - solve second order growth equation  \f$ [D''(\tau)=-aHD'(\tau)+3/2 a^2 \rho_M D(\tau) \f$ */
   dy[pba->index_bi_D] = y[pba->index_bi_D_prime];
   dy[pba->index_bi_D_prime] = -a*H*y[pba->index_bi_D_prime] + 1.5*a*a*rho_M*y[pba->index_bi_D];
 

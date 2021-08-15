@@ -344,7 +344,7 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_iv];
     p_tot -= pvecback[pba->index_bg_rho_iv];
 
-    printf("a=%e S=%e rho_idm_iv+rho_iv=%e\n",a_rel,S,pvecback[pba->index_bg_rho_idm_iv]+pvecback[pba->index_bg_rho_iv]);
+    // printf("a=%e S=%e rho_idm_iv+rho_iv=%e\n",a_rel,S,pvecback[pba->index_bg_rho_idm_iv]+pvecback[pba->index_bg_rho_iv]);
 
   }
 

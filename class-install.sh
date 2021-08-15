@@ -10,7 +10,12 @@ echo  '=========================================================='
 
 export CFLAGS=""
 
-#module load cpython/2.7.16
+module purge
+module load system/intel64
+module load intel_comp/2019.2
+module load gsl/2.5
+# module load cpython/2.7.16
+module load cpython/3.7.1
 
 #cd src
 make clean

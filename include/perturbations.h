@@ -244,6 +244,9 @@ struct perturbs
   short has_source_delta_ur;    /**< do we need source for delta of ultra-relativistic neutrinos/relics? */
   short has_source_delta_idr;   /**< do we need source for delta of interacting dark radiation? */
   short has_source_delta_idm_dr;/**< do we need source for delta of interacting dark matter (with dr)? */
+
+  short has_source_delta_idm_iv;/**< do we need source for delta of interacting dark matter (with vacuum energy)? */
+
   short has_source_delta_ncdm;  /**< do we need source for delta of all non-cold dark matter species (e.g. massive neutrinos)? */
   short has_source_theta_m;     /**< do we need source for theta of total matter? */
   short has_source_theta_cb;    /**< do we ALSO need source for theta of ONLY cdm and baryon? */
@@ -258,6 +261,7 @@ struct perturbs
   short has_source_theta_ur;    /**< do we need source for theta of ultra-relativistic neutrinos/relics? */
   short has_source_theta_idr;   /**< do we need source for theta of interacting dark radiation? */
   short has_source_theta_idm_dr;/**< do we need source for theta of interacting dark matter (with dr)? */
+  short has_source_theta_idm_iv;/**< do we need source for theta of interacting dark matter (with vacuum energy)? */
   short has_source_theta_ncdm;  /**< do we need source for theta of all non-cold dark matter species (e.g. massive neutrinos)? */
   short has_source_phi;         /**< do we need source for metric fluctuation phi? */
   short has_source_phi_prime;   /**< do we need source for metric fluctuation phi'? */
@@ -291,6 +295,9 @@ struct perturbs
   int index_tp_delta_ur; /**< index value for delta of ultra-relativistic neutrinos/relics */
   int index_tp_delta_idr; /**< index value for delta of interacting dark radiation */
   int index_tp_delta_idm_dr;/**< index value for delta of interacting dark matter (with dr)*/
+
+  int index_tp_delta_idm_iv;/**< index value for delta of interacting dark matter (with vacuum energy)*/
+  
   int index_tp_delta_ncdm1; /**< index value for delta of first non-cold dark matter species (e.g. massive neutrinos) */
   int index_tp_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_tp_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
@@ -307,6 +314,7 @@ struct perturbs
   int index_tp_theta_ur;    /**< index value for theta of ultra-relativistic neutrinos/relics */
   int index_tp_theta_idr;   /**< index value for theta of interacting dark radiation */
   int index_tp_theta_idm_dr;/**< index value for theta of interacting dark matter (with dr)*/
+  int index_tp_theta_idm_iv;/**< index value for theta of interacting dark matter (with vacuum energy)*/
   int index_tp_theta_dr;    /**< index value for F1 of decay radiation */
   int index_tp_theta_ncdm1; /**< index value for theta of first non-cold dark matter species (e.g. massive neutrinos) */
 
@@ -463,6 +471,10 @@ struct perturb_vector
   int index_pt_theta_cdm; /**< cdm velocity */
   int index_pt_delta_idm_dr;/**< idm_dr density */
   int index_pt_theta_idm_dr;/**< idm_dr velocity */
+  
+  int index_pt_delta_idm_iv;  /**< idm_iv density */
+  int index_pt_theta_idm_iv;/**< idm_iv velocity */
+  
   int index_pt_delta_dcdm; /**< dcdm density */
   int index_pt_theta_dcdm; /**< dcdm velocity */
   int index_pt_delta_fld;  /**< dark energy density in true fluid case */

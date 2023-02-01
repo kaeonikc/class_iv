@@ -1255,6 +1255,9 @@ int nonlinear_init(
     if (pba->has_idm_dr){
       fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But you have requested interacting dark matter (idm_dr), which makes the use of Halofit or HMCode unreliable.\n");
     }
+    if (pba->has_idm_iv){
+      fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But you have requested interacting dark matter (idm_iv), which makes the use of Halofit or HMCode potentially unreliable.\n");
+    }
   }
 
   /** - define indices in nonlinear structure (and allocate some arrays in the structure) */

@@ -228,6 +228,9 @@ int perturb_output_data(
           class_store_double(dataptr,tk[ppt->index_tp_delta_b],ppt->has_source_delta_b,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_cdm],ppt->has_source_delta_cdm,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_idm_dr],ppt->has_source_delta_idm_dr,storeidx);
+
+          class_store_double(dataptr,tk[ppt->index_tp_delta_idm_iv],ppt->has_source_delta_idm_iv,storeidx);
+
           class_store_double(dataptr,tk[ppt->index_tp_delta_fld],ppt->has_source_delta_fld,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_ur],ppt->has_source_delta_ur,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_idr],ppt->has_source_delta_idr,storeidx);
@@ -256,6 +259,9 @@ int perturb_output_data(
           class_store_double(dataptr,tk[ppt->index_tp_theta_b],ppt->has_source_theta_b,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_cdm],ppt->has_source_theta_cdm,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_idm_dr],ppt->has_source_theta_idm_dr,storeidx);
+
+          class_store_double(dataptr,tk[ppt->index_tp_theta_idm_iv],ppt->has_source_theta_idm_iv,storeidx);
+
           class_store_double(dataptr,tk[ppt->index_tp_theta_fld],ppt->has_source_theta_fld,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_ur],ppt->has_source_theta_ur,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_idr],ppt->has_source_theta_idr,storeidx);
@@ -277,6 +283,9 @@ int perturb_output_data(
         /* rescale and reorder the matter transfer functions following the CMBFAST/CAMB convention */
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_cdm]/k2,ppt->has_source_delta_cdm,storeidx,0.0);
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_idm_dr]/k2,ppt->has_source_delta_idm_dr,storeidx,0.0);
+
+        class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_idm_iv]/k2,ppt->has_source_delta_idm_iv,storeidx,0.0);
+
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_b]/k2,ppt->has_source_delta_b,storeidx,0.0);
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_g]/k2,ppt->has_source_delta_g,storeidx,0.0);
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_ur]/k2,ppt->has_source_delta_ur,storeidx,0.0);
@@ -321,6 +330,9 @@ int perturb_output_titles(
       class_store_columntitle(titles,"d_b",_TRUE_);
       class_store_columntitle(titles,"d_cdm",pba->has_cdm);
       class_store_columntitle(titles,"d_idm_dr",pba->has_idm_dr);
+
+      class_store_columntitle(titles,"d_idm_iv",pba->has_idm_iv);
+
       class_store_columntitle(titles,"d_fld",pba->has_fld);
       class_store_columntitle(titles,"d_ur",pba->has_ur);
       class_store_columntitle(titles,"d_idr",pba->has_idr);
@@ -350,6 +362,7 @@ int perturb_output_titles(
       class_store_columntitle(titles,"t_b",_TRUE_);
       class_store_columntitle(titles,"t_cdm",((pba->has_cdm == _TRUE_) && (ppt->gauge != synchronous)));
       class_store_columntitle(titles,"t_idm_dr",pba->has_idm_dr);
+      class_store_columntitle(titles,"d_idm_iv",pba->has_idm_iv);
       class_store_columntitle(titles,"t_fld",pba->has_fld);
       class_store_columntitle(titles,"t_ur",pba->has_ur);
       class_store_columntitle(titles,"t_idr",pba->has_idr);
@@ -371,6 +384,7 @@ int perturb_output_titles(
     class_store_columntitle(titles,"k (h/Mpc)",_TRUE_);
     class_store_columntitle(titles,"-T_cdm/k2",_TRUE_);
     class_store_columntitle(titles,"-T_idm_dr/k2",_TRUE_);
+    class_store_columntitle(titles,"-T_idm_iv/k2",_TRUE_);
     class_store_columntitle(titles,"-T_b/k2",_TRUE_);
     class_store_columntitle(titles,"-T_g/k2",_TRUE_);
     class_store_columntitle(titles,"-T_ur/k2",_TRUE_);
@@ -1048,6 +1062,7 @@ int perturb_indices_of_perturbs(
   ppt->has_source_delta_ur = _FALSE_;
   ppt->has_source_delta_idr = _FALSE_;
   ppt->has_source_delta_idm_dr = _FALSE_;
+  ppt->has_source_delta_idm_iv = _FALSE_;
   ppt->has_source_delta_ncdm = _FALSE_;
   ppt->has_source_theta_m = _FALSE_;
   ppt->has_source_theta_cb = _FALSE_;
@@ -1062,6 +1077,7 @@ int perturb_indices_of_perturbs(
   ppt->has_source_theta_ur = _FALSE_;
   ppt->has_source_theta_idr = _FALSE_;
   ppt->has_source_theta_idm_dr = _FALSE_;
+  ppt->has_source_theta_idm_iv = _FALSE_;
   ppt->has_source_theta_ncdm = _FALSE_;
   ppt->has_source_phi = _FALSE_;
   ppt->has_source_phi_prime = _FALSE_;
@@ -1155,6 +1171,8 @@ int perturb_indices_of_perturbs(
           ppt->has_source_delta_idr = _TRUE_;
         if (pba->has_idm_dr == _TRUE_)
           ppt->has_source_delta_idm_dr = _TRUE_;
+        if (pba->has_idm_iv == _TRUE_)
+          ppt->has_source_delta_idm_iv = _TRUE_;
         if (pba->has_dr == _TRUE_)
           ppt->has_source_delta_dr = _TRUE_;
         if (pba->has_ncdm == _TRUE_)
@@ -1186,6 +1204,8 @@ int perturb_indices_of_perturbs(
           ppt->has_source_theta_idr = _TRUE_;
         if (pba->has_idm_dr == _TRUE_)
           ppt->has_source_theta_idm_dr = _TRUE_;
+        if ((pba->has_idm_iv == _TRUE_) && (ppt->gauge != synchronous)) /* TODO */
+          ppt->has_source_theta_idm_iv = _TRUE_; // TODO
         if (pba->has_dr == _TRUE_)
           ppt->has_source_theta_dr = _TRUE_;
         if (pba->has_ncdm == _TRUE_)
@@ -1259,6 +1279,9 @@ int perturb_indices_of_perturbs(
       class_define_index(ppt->index_tp_delta_ur,   ppt->has_source_delta_ur,  index_type,1);
       class_define_index(ppt->index_tp_delta_idr,  ppt->has_source_delta_idr, index_type,1);
       class_define_index(ppt->index_tp_delta_idm_dr,  ppt->has_source_delta_idm_dr, index_type,1);
+
+      class_define_index(ppt->index_tp_delta_idm_iv, ppt->has_source_delta_idm_iv, index_type,1); // idm_iv
+      
       class_define_index(ppt->index_tp_delta_ncdm1,ppt->has_source_delta_ncdm,index_type,pba->N_ncdm);
       class_define_index(ppt->index_tp_theta_m,    ppt->has_source_theta_m,   index_type,1);
       class_define_index(ppt->index_tp_theta_cb,   ppt->has_source_theta_cb,  index_type,1);
@@ -3130,6 +3153,9 @@ int perturb_prepare_k_output(struct background * pba,
       /* Interacting dark matter */
       class_store_columntitle(ppt->scalar_titles,"delta_idm_dr",pba->has_idm_dr);
       class_store_columntitle(ppt->scalar_titles,"theta_idm_dr",pba->has_idm_dr);
+      /* Interacting dark matter with vacuum energy */
+      class_store_columntitle(ppt->scalar_titles,"delta_idm_iv",pba->has_idm_iv);
+      class_store_columntitle(ppt->scalar_titles,"theta_idm_iv",pba->has_idm_iv);
       /* Cold dark matter */
       class_store_columntitle(ppt->scalar_titles,"delta_cdm",pba->has_cdm);
       class_store_columntitle(ppt->scalar_titles,"theta_cdm",pba->has_cdm);
@@ -3724,6 +3750,10 @@ int perturb_vector_init(
     class_define_index(ppv->index_pt_delta_idm_dr,pba->has_idm_dr,index_pt,1); /* idm_dr density */
     class_define_index(ppv->index_pt_theta_idm_dr,pba->has_idm_dr,index_pt,1); /* idm_dr velocity */
 
+    /* idm_iv */
+    class_define_index(ppv->index_pt_delta_idm_iv,pba->has_idm_iv,index_pt,1); /* idm_iv density */
+    class_define_index(ppv->index_pt_theta_idm_iv,pba->has_idm_iv && (ppt->gauge != synchronous),index_pt,1); /* idm_iv velocity */
+
     /* dcdm */
 
     class_define_index(ppv->index_pt_delta_dcdm,pba->has_dcdm,index_pt,1); /* dcdm density */
@@ -4184,6 +4214,16 @@ int perturb_vector_init(
           ppw->pv->y[ppw->pv->index_pt_theta_idm_dr];
       }
 
+      if (pba->has_idm_iv == _TRUE_) {
+
+        ppv->y[ppv->index_pt_delta_idm_iv] =
+          ppw->pv->y[ppw->pv->index_pt_delta_idm_iv];
+
+        if (ppt->gauge != synchronous) {
+          ppv->y[ppv->index_pt_theta_idm_iv] =
+            ppw->pv->y[ppw->pv->index_pt_theta_idm_iv];
+        }
+      }
 
       if (pba->has_dcdm == _TRUE_) {
 
@@ -5131,6 +5171,10 @@ int perturb_initial_conditions(struct precision * ppr,
       rho_m += ppw->pvecback[pba->index_bg_rho_idm_dr];
     }
 
+    if (pba->has_idm_iv == _TRUE_) {
+      rho_m += ppw->pvecback[pba->index_bg_rho_idm_iv];
+    }
+
     if (pba->has_dcdm == _TRUE_) {
       rho_m += ppw->pvecback[pba->index_bg_rho_dcdm];
     }
@@ -5238,6 +5282,11 @@ int perturb_initial_conditions(struct precision * ppr,
       /* interacting dark matter */
       if (pba->has_idm_dr == _TRUE_) {
         ppw->pv->y[ppw->pv->index_pt_delta_idm_dr] = 3./4.*ppw->pv->y[ppw->pv->index_pt_delta_g]; /* idm_dr density */
+      }
+
+      if (pba->has_idm_iv == _TRUE_) {
+        ppw->pv->y[ppw->pv->index_pt_delta_idm_iv] = 3./4.*ppw->pv->y[ppw->pv->index_pt_delta_g]; /* idm_iv density */
+        /* idm_iv velocity vanishes in the synchronous gauge TODO.. */
       }
 
       if (pba->has_dcdm == _TRUE_) {
@@ -5477,6 +5526,8 @@ int perturb_initial_conditions(struct precision * ppr,
         delta_cdm = ppw->pv->y[ppw->pv->index_pt_delta_dcdm];
       else if (pba->has_idm_dr == _TRUE_)
         delta_cdm = ppw->pv->y[ppw->pv->index_pt_delta_idm_dr];
+      else if (pba->has_idm_iv == _TRUE_)
+        delta_cdm = ppw->pv->y[ppw->pv->index_pt_delta_idm_iv]; // TODO
       else
         delta_cdm=0.;
 
@@ -5505,6 +5556,11 @@ int perturb_initial_conditions(struct precision * ppr,
         ppw->pv->y[ppw->pv->index_pt_delta_idm_dr] -= 3.*a_prime_over_a*alpha;
         ppw->pv->y[ppw->pv->index_pt_theta_idm_dr] = k*k*alpha;
         /* comment on idm_dr initial conditions: theta_idm_dr is set later, together with theta_idr, if the tight coupling is on */
+      }
+
+      if (pba->has_idm_iv == _TRUE_) {
+        ppw->pv->y[ppw->pv->index_pt_delta_idm_iv] -= 3.*a_prime_over_a*alpha;
+        ppw->pv->y[ppw->pv->index_pt_theta_idm_iv] = k*k*alpha; // TODO?, change w_cdm_iv != 0
       }
 
       if (pba->has_dcdm == _TRUE_) {
@@ -6651,6 +6707,25 @@ int perturb_total_stress_energy(
       rho_plus_p_tot += ppw->pvecback[pba->index_bg_rho_idm_dr];
     }
 
+    /* idm_iv contribution */
+    if (pba->has_idm_iv == _TRUE_) {
+      ppw->delta_rho += ppw->pvecback[pba->index_bg_rho_idm_iv]*y[ppw->pv->index_pt_delta_idm_iv]; // contribution to total perturbed stress-energy
+      if (ppt->gauge != synchronous)
+        ppw->rho_plus_p_theta = ppw->rho_plus_p_theta + ppw->pvecback[pba->index_bg_rho_idm_iv]*y[ppw->pv->index_pt_theta_idm_iv]; // contribution to total perturbed stress-energy
+
+      ppw->rho_plus_p_tot += ppw->pvecback[pba->index_bg_rho_idm_iv];
+
+      if (ppt->has_source_delta_m == _TRUE_) {
+        delta_rho_m += ppw->pvecback[pba->index_bg_rho_idm_iv]*y[ppw->pv->index_pt_delta_idm_iv]; // contribution to delta rho_matter
+        rho_m += ppw->pvecback[pba->index_bg_rho_idm_iv];
+      }
+      if ((ppt->has_source_delta_m == _TRUE_) || (ppt->has_source_theta_m == _TRUE_)) {
+        if (ppt->gauge != synchronous)
+          rho_plus_p_theta_m += ppw->pvecback[pba->index_bg_rho_idm_iv]*y[ppw->pv->index_pt_theta_idm_iv]; // contribution to [(rho+p)theta]_matter
+        rho_plus_p_m += ppw->pvecback[pba->index_bg_rho_idm_iv];
+      }
+    }
+
     /* dcdm contribution */
     if (pba->has_dcdm == _TRUE_) {
       ppw->delta_rho += ppw->pvecback[pba->index_bg_rho_dcdm]*y[ppw->pv->index_pt_delta_dcdm];
@@ -7410,11 +7485,13 @@ int perturb_sources(
     if (ppt->has_source_delta_tot == _TRUE_)  {
 
       /** We follow the (debatable) CMBFAST/CAMB convention of not including rho_lambda in rho_tot */
+      rho_tot = pvecback[pba->index_bg_rho_tot];
       if (pba->has_lambda == _TRUE_){
-        rho_tot = pvecback[pba->index_bg_rho_tot] - pvecback[pba->index_bg_rho_lambda];
+        rho_tot -= pvecback[pba->index_bg_rho_lambda];
       }
-      else{
-        rho_tot = pvecback[pba->index_bg_rho_tot];
+      /** We are also not including rho_iv in rho_tot as it is part of rho_lambda (see above) */
+      if (pba->has_idm_iv == _TRUE_){
+        rho_tot -= pvecback[pba->index_bg_rho_iv];
       }
 
       _set_source_(ppt->index_tp_delta_tot) = ppw->delta_rho/rho_tot
@@ -7436,6 +7513,12 @@ int perturb_sources(
     /* delta_cdm */
     if (ppt->has_source_delta_cdm == _TRUE_) {
       _set_source_(ppt->index_tp_delta_cdm) = y[ppw->pv->index_pt_delta_cdm]
+        + 3.*a_prime_over_a*theta_over_k2; // N-body gauge correction
+    }
+
+    /* delta_idm_iv */
+    if (ppt->has_source_delta_idm_iv == _TRUE_) {
+      _set_source_(ppt->index_tp_delta_idm_iv) = y[ppw->pv->index_pt_delta_idm_iv]
         + 3.*a_prime_over_a*theta_over_k2; // N-body gauge correction
     }
 
@@ -7552,6 +7635,12 @@ int perturb_sources(
     /* theta_cdm */
     if (ppt->has_source_theta_cdm == _TRUE_) {
       _set_source_(ppt->index_tp_theta_cdm) = y[ppw->pv->index_pt_theta_cdm]
+        + theta_shift; // N-body gauge correction
+    }
+
+    /* theta_idm_iv */
+    if (ppt->has_source_theta_idm_iv == _TRUE_) {
+      _set_source_(ppt->index_tp_theta_idm_iv) = y[ppw->pv->index_pt_theta_idm_iv]
         + theta_shift; // N-body gauge correction
     }
 
@@ -7715,6 +7804,7 @@ int perturb_print_variables(double tau,
   double delta_b,theta_b;
   double delta_cdm=0.,theta_cdm=0.;
   double delta_idm_dr=0.,theta_idm_dr=0.;
+  double delta_idm_iv=0.,theta_idm_iv=0.;
   double delta_dcdm=0.,theta_dcdm=0.;
   double delta_dr=0.,theta_dr=0.,shear_dr=0., f_dr=1.0;
   double delta_ur=0.,theta_ur=0.,shear_ur=0.,l4_ur=0.;
@@ -7890,6 +7980,18 @@ int perturb_print_variables(double tau,
       theta_idm_dr = y[ppw->pv->index_pt_theta_idm_dr];
     }
 
+    /* interacting dark matter with vacuum energy */
+    if (pba->has_idm_iv == _TRUE_) {
+
+      delta_idm_iv = y[ppw->pv->index_pt_delta_idm_iv];
+      if (ppt->gauge == synchronous) {
+        theta_idm_iv = 0.;
+      }
+      else {
+        theta_idm_iv = y[ppw->pv->index_pt_theta_idm_iv];
+      }
+    }
+
     if (pba->has_cdm == _TRUE_) {
 
       delta_cdm = y[ppw->pv->index_pt_delta_cdm];
@@ -8050,6 +8152,11 @@ int perturb_print_variables(double tau,
         theta_idm_dr += k*k*alpha;
       }
 
+      if (pba->has_idm_iv == _TRUE_) {
+        delta_idm_iv -= 3. * pvecback[pba->index_bg_H]*pvecback[pba->index_bg_a]*alpha;
+        theta_idm_iv += k*k*alpha;
+      }
+
       if (pba->has_ncdm == _TRUE_) {
         for(n_ncdm=0; n_ncdm < pba->N_ncdm; n_ncdm++){
           /** - --> TODO: gauge transformation of delta, deltaP/rho (?) and theta using -= 3aH(1+w_ncdm) alpha for delta. */
@@ -8113,6 +8220,9 @@ int perturb_print_variables(double tau,
     /* Interacting dark matter */
     class_store_double(dataptr, delta_idm_dr, pba->has_idm_dr, storeidx);
     class_store_double(dataptr, theta_idm_dr, pba->has_idm_dr, storeidx);
+    /* Interacting dark matter with vacuum energy*/
+    class_store_double(dataptr, delta_idm_iv, pba->has_idm_iv, storeidx);
+    class_store_double(dataptr, theta_idm_iv, pba->has_idm_iv, storeidx);
     /* Cold dark matter */
     class_store_double(dataptr, delta_cdm, pba->has_cdm, storeidx);
     class_store_double(dataptr, theta_cdm, pba->has_cdm, storeidx);
@@ -8704,6 +8814,30 @@ int perturb_derivs(double tau,
 
       if (ppt->gauge == synchronous) {
         dy[pv->index_pt_delta_cdm] = -metric_continuity; /* cdm density */
+      }
+    }
+
+    /** - ---> idm_iv */
+
+    if (pba->has_idm_iv == _TRUE_) {
+
+      /** - ----> newtonian gauge: idm_iv density  */
+
+      if (ppt->gauge == newtonian) {
+
+        class_stop(pba->error_message,"IDM IV implementation not supporting newtonian gauge (yet)\n");
+        // dy[pv->index_pt_delta_cdm] = -(y[pv->index_pt_theta_cdm]+metric_continuity); /* cdm density */
+
+        // dy[pv->index_pt_theta_cdm] = - a_prime_over_a*y[pv->index_pt_theta_cdm] + metric_euler; /* cdm velocity */
+      }
+
+      /** - ----> synchronous gauge: idm_iv density only (velocity set to zero by definition of the gauge) */
+
+      if (ppt->gauge == synchronous) {
+        dy[pv->index_pt_delta_idm_iv] = -metric_continuity + y[pv->index_pt_delta_idm_iv] / pvecback[pba->index_bg_rho_idm_iv] * 
+          pvecback[pba->index_bg_a] * (pba->alpha_idm_iv * pvecback[pba->index_bg_H] * pvecback[pba->index_bg_rho_idm_iv] + 
+          pba->beta_idm_iv * pvecback[pba->index_bg_H] * pvecback[pba->index_bg_rho_iv]) ;  
+          // The interaction Q is specified in the last term in the parentheses above /* idm_iv density */
       }
     }
 

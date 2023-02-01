@@ -111,6 +111,9 @@ cdef class Class:
     property state:
         def __get__(self):
             return True
+    property is_computed:
+        def __get__(self):
+            return self.computed
     property Omega_nu:
         def __get__(self):
             return self.ba.Omega0_ncdm_tot
@@ -1199,6 +1202,66 @@ cdef class Class:
 
         return f
 
+    def scale_independent_growth_factor_D_idm_iv(self, z):
+        """
+        scale_independent_growth_factor(z)
+
+        Return the scale invariant growth factor D_idm_iv(a) for CDM perturbations in interacting vacuum-cdm scenario
+        (exactly, the quantity defined by Class as index_bg_D_idm_iv in the background module)
+
+        Parameters
+        ----------
+        z : float
+                Desired redshift
+        """
+        cdef double tau
+        cdef int last_index #junk
+        cdef double * pvecback
+
+        pvecback = <double*> calloc(self.ba.bg_size,sizeof(double))
+
+        if background_tau_of_z(&self.ba,z,&tau)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if background_at_tau(&self.ba,tau,self.ba.long_info,self.ba.inter_normal,&last_index,pvecback)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        D = pvecback[self.ba.index_bg_D_idm_iv]
+
+        free(pvecback)
+
+        return D
+        
+    def scale_independent_growth_factor_f_rsd(self, z):
+        """
+        scale_independent_growth_factor_f_rsd(z)
+
+        Return the scale invariant growth factor f_rsd(z)=d ln D / d ln a  -  Q/H/rho_idm_iv for interacting CDM-vacuum perturbations
+        (exactly, the quantity defined by Class as index_bg_f_rsd in the background module)
+
+        Parameters
+        ----------
+        z : float
+                Desired redshift
+        """
+        cdef double tau
+        cdef int last_index #junk
+        cdef double * pvecback
+
+        pvecback = <double*> calloc(self.ba.bg_size,sizeof(double))
+
+        if background_tau_of_z(&self.ba,z,&tau)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if background_at_tau(&self.ba,tau,self.ba.long_info,self.ba.inter_normal,&last_index,pvecback)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        f_rsd = pvecback[self.ba.index_bg_f_rsd]
+
+        free(pvecback)
+
+        return f_rsd
+
     def z_of_tau(self, tau):
         """
         Redshift corresponding to a given conformal time.
@@ -1686,6 +1749,14 @@ cdef class Class:
                 value = self.ba.Omega0_m
             elif name == 'omega_m':
                 value = self.ba.Omega0_m/self.ba.h**2
+            elif name == 'Omega_idm_iv':
+                value = self.ba.Omega0_idm_iv
+            elif name == 'omega_idm_iv':
+                value = self.ba.Omega0_idm_iv/self.ba.h**2
+            elif name == 'Omega_iv':
+                value = self.ba.Omega0_iv
+            elif name == 'omega_iv':
+                value = self.ba.Omega0_iv/self.ba.h**2
             elif name == 'xi_idr':
                 value = self.ba.T_idr/self.ba.T_cmb
             elif name == 'N_dg':

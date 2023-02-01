@@ -320,6 +320,34 @@ int background_functions(
     rho_m += pvecback[pba->index_bg_rho_cdm];
   }
 
+  if (pba->has_idm_iv == _TRUE_) {    
+
+    /* idm_iv */
+
+    double abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
+    double ambp3 = pba->alpha_idm_iv - pba->beta_idm_iv + 3;
+    double S = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
+    //pvecback[pba->index_bg_rho_idm_iv] = ((abp3+S+(abp3-S)*pow(a_rel,S))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a_rel,S)-1)*pba->Omega0_iv *pow(pba->H0,2) )/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2.);
+    pvecback[pba->index_bg_rho_idm_iv] = ( ( (abp3 + S)*pba->Omega0_idm_iv*pow(pba->H0,2)/S/2.
+      + pba->beta_idm_iv * pba->Omega0_iv*pow(pba->H0,2)/S )*pow(a_rel,-S/2) - ( (abp3 - S)*pba->Omega0_idm_iv*pow(pba->H0,2)/S/2.
+      + pba->beta_idm_iv * pba->Omega0_iv*pow(pba->H0,2)/S )*pow(a_rel,S/2) ) * pow(a_rel, - ambp3/2);
+    rho_tot += pvecback[pba->index_bg_rho_idm_iv];
+    p_tot += 0.;
+    rho_m += pvecback[pba->index_bg_rho_idm_iv];
+
+    /* iv */
+
+    //pvecback[pba->index_bg_rho_iv] = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv * pow(pba->H0,2) )*(pow(a_rel,S)-1)-(pba->beta_idm_iv + 3 - S - (pba->beta_idm_iv + 3 + S)*pow(a_rel,S))*pba->Omega0_iv *pow(pba->H0,2))/2./S/pow(a_rel,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S)/2);
+    pvecback[pba->index_bg_rho_iv] = ( ( pba->alpha_idm_iv * pba->Omega0_idm_iv*pow(pba->H0,2)/S
+           + (abp3 + S)*pba->Omega0_iv*pow(pba->H0,2)/S/2. ) * pow(a_rel,S/2) - ( pba->alpha_idm_iv * pba->Omega0_idm_iv*pow(pba->H0,2)/S
+           + (abp3 - S)*pba->Omega0_iv*pow(pba->H0,2)/S/2. ) * pow(a_rel,-S/2)) * pow(a_rel,-ambp3/2);
+    rho_tot += pvecback[pba->index_bg_rho_iv];
+    p_tot -= pvecback[pba->index_bg_rho_iv];
+
+    // printf("a=%e S=%e rho_idm_iv+rho_iv=%e\n",a_rel,S,pvecback[pba->index_bg_rho_idm_iv]+pvecback[pba->index_bg_rho_iv]);
+
+  }
+
   /* dcdm */
   if (pba->has_dcdm == _TRUE_) {
     /* Pass value of rho_dcdm to output */
@@ -502,6 +530,25 @@ int background_functions(
 
 }
 
+double w_iv_integrand ( double a, void * params) {
+        double abp3, S_iv, rho_iv, rho_idm_iv, rho_gamma, w_fld;
+        struct background *pba = (struct background *) params;
+  
+          abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
+          // Define function S(a,b) = sqrt( (a+b+3)^2 - 4ab )
+          S_iv = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
+          // rho_idm_iv stands for pressureless-matter energy density interacting with vacuum energy (see background_functions for details)
+          rho_idm_iv = ((abp3+S_iv+(abp3-S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a / pba->a_today,S_iv)-1)*pba->Omega0_iv *pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
+          // rho_iv is vacuum energy density interacting with pressureless-matter (see background_functions for details)
+		      rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv *pow(pba->H0,2))*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv * pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
+          // rho_gamma is the additional barotropic fluid with density rho_gamma = rho_fld - rho_idm_iv - rho_iv and pressure P = w0 rho_gamma
+          rho_gamma = (pba->Omega0_fld - pba->Omega0_idm_iv - pba->Omega0_iv) * pow(pba->H0,2) / pow(a / pba->a_today,3*(1.+ pba->w0_fld));
+        
+        w_fld = (- rho_iv + rho_gamma * pba->w0_fld) / (rho_idm_iv + rho_iv + rho_gamma);
+
+        return (3. * (1. + w_fld) / a);
+      }
+
 /**
  * Single place where the fluid equation of state is
  * defined. Parameters of the function are passed through the
@@ -527,6 +574,8 @@ int background_w_fld(
   double dOmega_ede_over_da = 0.;
   double d2Omega_ede_over_da2 = 0.;
   double a_eq, Omega_r, Omega_m;
+  double abp3, S_iv, rho_iv, rho_idm_iv, rho_gamma, result;
+  size_t neval;
 
   /** - first, define the function w(a) */
   switch (pba->fluid_equation_of_state) {
@@ -548,6 +597,7 @@ int background_w_fld(
     Omega_r = pba->Omega0_g * (1. + 3.046 * 7./8.*pow(4./11.,4./3.)); // assumes LambdaCDM + eventually massive neutrinos so light that they are relativistic at equality; needs to be generalised later on.
     Omega_m = pba->Omega0_b;
     if (pba->has_cdm == _TRUE_) Omega_m += pba->Omega0_cdm;
+    if (pba->has_idm_iv == _TRUE_) Omega_m += pba->Omega0_idm_iv;
     if (pba->has_idm_dr == _TRUE_) Omega_m += pba->Omega0_idm_dr;
     if (pba->has_dcdm == _TRUE_)
       class_stop(pba->error_message,"Early Dark Energy not compatible with decaying Dark Matter because we omitted to code the calculation of a_eq in that case, but it would not be difficult to add it if necessary, should be a matter of 5 minutes");
@@ -558,6 +608,22 @@ int background_w_fld(
     break;
   }
 
+  case IDM_IV:    
+    // w_fld in IDM_IV case (taken from eq. 51 in ...)
+    abp3 = pba->alpha_idm_iv + pba->beta_idm_iv + 3;
+    // Define function S(a,b) = sqrt( (a+b+3)^2 - 4ab )
+    S_iv = sqrt(pow(abp3,2) - 4*pba->alpha_idm_iv*pba->beta_idm_iv);      
+    // rho_idm_iv stands for pressureless-matter energy density interacting with vacuum energy (see background_functions for details)
+    rho_idm_iv = ((abp3+S_iv+(abp3-S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_idm_iv * pow(pba->H0,2) - 2*pba->beta_idm_iv*(pow(a / pba->a_today,S_iv)-1)*pba->Omega0_iv *pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
+    // rho_iv is vacuum energy density interacting with pressureless-matter (see background_functions for details)
+		rho_iv = (pba->alpha_idm_iv*(2*pba->Omega0_idm_iv * pow(pba->H0,2) + pba->Omega0_iv *pow(pba->H0,2))*(pow(a / pba->a_today,S_iv)-1)-(pba->beta_idm_iv + 3 - S_iv - (pba->beta_idm_iv + 3 + S_iv)*pow(a / pba->a_today,S_iv))*pba->Omega0_iv * pow(pba->H0,2))/2./S_iv/pow(a / pba->a_today,(pba->alpha_idm_iv - pba->beta_idm_iv + 3 + S_iv)/2);
+    // rho_gamma is the additional barotropic fluid with density rho_gamma = rho_fld - rho_idm_iv - rho_iv and pressure P = w0 rho_gamma
+    rho_gamma = (pba->Omega0_fld - pba->Omega0_idm_iv - pba->Omega0_iv) * pow(pba->H0,2) / pow(a / pba->a_today,3*(1.+ pba->w0_fld));
+
+    // w_fld here is the effective (overall) equation od state
+    *w_fld = (- rho_iv + rho_gamma * pba->w0_fld) / (rho_idm_iv + rho_iv + rho_gamma);
+    break;
+  }
 
   /** - then, give the corresponding analytic derivative dw/da (used
       by perturbation equations; we could compute it numerically,
@@ -574,6 +640,16 @@ int background_w_fld(
       - dOmega_ede_over_da/3./(1.-Omega_ede)/Omega_ede
       + dOmega_ede_over_da*dOmega_ede_over_da*a/3./(1.-Omega_ede)/(1.-Omega_ede)/Omega_ede
       + a_eq/3./(a+a_eq)/(a+a_eq);
+    break;
+  case IDM_IV:
+    // alpha_idm_iv and beta_idm_iv are interation parameters according to the model
+    // Q = alpha_iv * H * rho_m_iv + beta_iv * H * rho_v_iv
+    // overall equation of state for 2-fluid case
+    // *dw_over_da_fld = (- pba->alpha_idm_iv * power(rho_idm_iv, 2.) - pba->beta_idm_iv * power(rho_iv, 2.) - (pba->alpha_idm_iv + pba->beta_idm_iv + 3.) * rho_idm_iv * rho_iv )/a
+    // overall equation of state for 3-fluid case
+    *dw_over_da_fld = - (pba->alpha_idm_iv * rho_idm_iv + pba->beta_idm_iv * rho_iv + 3.*(1.+pba->w0_fld)*pba->w0_fld * rho_gamma 
+      + 3.*(rho_iv-rho_gamma) * ( rho_idm_iv + (1.+pba->w0_fld)*rho_gamma )/(rho_idm_iv + rho_iv + rho_gamma) ) 
+      / (rho_idm_iv + rho_iv + rho_gamma) / ( a / pba->a_today);
     break;
   }
 
@@ -593,6 +669,20 @@ int background_w_fld(
     break;
   case EDE:
     class_stop(pba->error_message,"EDE implementation not finished: to finish it, read the comments in background.c just before this line\n");
+    break;
+  case IDM_IV:
+    // integrate w da 
+    printf("integrating romberg a=%e \n", a/pba->a_today);
+    // Romberg integration for 3(1+w_fld)/a
+
+    gsl_function F;
+    F.function = &w_iv_integrand;
+    F.params = pba;
+
+    gsl_integration_romberg( &F, pba->a_today, a, 0., 1e-2, &result, &neval, work_rom );
+
+    *integral_fld = result;
+
     break;
   }
 
@@ -706,6 +796,11 @@ int background_init(
              pba->error_message,
              pba->error_message);
 
+  if (pba->fluid_equation_of_state == IDM_IV) {
+      work_rom = gsl_integration_romberg_alloc(20);
+      printf("integration workspace allocated!\n");
+  }
+
   /* fluid equation of state */
   if (pba->has_fld == _TRUE_) {
 
@@ -768,6 +863,10 @@ int background_init(
 int background_free(
                     struct background *pba
                     ) {
+
+  if (pba->fluid_equation_of_state == IDM_IV) {
+      gsl_integration_romberg_free(work_rom);
+  }
 
   class_call(background_free_noinput(pba),
               pba->error_message,
@@ -885,6 +984,7 @@ int background_indices(
   pba->has_ur = _FALSE_;
   pba->has_idr = _FALSE_;
   pba->has_idm_dr = _FALSE_;
+  pba->has_idm_iv = _FALSE_;
   pba->has_curvature = _FALSE_;
 
   if (pba->Omega0_cdm != 0.)
@@ -916,6 +1016,12 @@ int background_indices(
 
   if (pba->Omega0_idm_dr != 0.)
     pba->has_idm_dr = _TRUE_;
+
+  if (pba->Omega0_idm_iv !=0. && (pba->Omega0_fld == 0. || pba->fluid_equation_of_state != IDM_IV )){
+    printf("HAS idm_ivi \n");
+    pba->has_idm_iv = _TRUE_;
+  } else 
+    printf("NOT HAS idm	_iv Omega0_idm_iv=%e Omega0_fld=%e fluid_eos=%d\n",pba->Omega0_idm_iv,pba->Omega0_fld,pba->fluid_equation_of_state);
 
   if (pba->sgnK != 0)
     pba->has_curvature = _TRUE_;
@@ -994,6 +1100,12 @@ int background_indices(
   /* - index for interacting dark matter */
   class_define_index(pba->index_bg_rho_idm_dr,pba->has_idm_dr,index_bg,1);
 
+  /* - index interacting for interacting vacuum */
+  class_define_index(pba->index_bg_rho_iv,pba->has_idm_iv,index_bg,1);
+
+  /* - index for interacting dark matter with iv */
+  class_define_index(pba->index_bg_rho_idm_iv,pba->has_idm_iv,index_bg,1);
+
   /* - put here additional ingredients that you want to appear in the
      normal vector */
   /*    */
@@ -1030,6 +1142,12 @@ int background_indices(
 
   /* -> velocity growth factor in dust universe */
   class_define_index(pba->index_bg_f,_TRUE_,index_bg,1);
+
+  /* -> density growth factor for interacting vacuum */
+  class_define_index(pba->index_bg_D_idm_iv,pba->has_idm_iv,index_bg,1);
+
+  /* -> peculiar velocity growth factor (modified growth rate) */
+  class_define_index(pba->index_bg_f_rsd,pba->has_idm_iv,index_bg,1);
 
   /* -> put here additional quantities describing background */
   /*    */
@@ -1071,6 +1189,10 @@ int background_indices(
   /* -> Second order equation for growth factor */
   class_define_index(pba->index_bi_D,_TRUE_,index_bi,1);
   class_define_index(pba->index_bi_D_prime,_TRUE_,index_bi,1);
+
+  /* -> Second order equation for growth factor for idm_iv */
+  class_define_index(pba->index_bi_D_idm_iv,pba->has_idm_iv,index_bi,1);
+  class_define_index(pba->index_bi_D_prime_idm_iv,pba->has_idm_iv,index_bi,1);
 
   /* -> index for conformal time in vector of variables to integrate */
   class_define_index(pba->index_bi_tau,_TRUE_,index_bi,1);
@@ -1669,6 +1791,9 @@ int background_solve(
   /* comoving radius coordinate in Mpc (equal to conformal distance in flat case) */
   double comoving_radius=0.;
 
+  /* Cold dark matter-vacuum interaction model Q */
+  double Q_idm_iv;
+
   bpaw.pba = pba;
   class_alloc(pvecback,pba->bg_size*sizeof(double),pba->error_message);
   bpaw.pvecback = pvecback;
@@ -1842,11 +1967,22 @@ int background_solve(
 
     /* -> compute growth functions (valid in dust universe) */
 
+    /* CDM-vacuum interaction term */
+    Q_idm_iv = pba->alpha_idm_iv*pvecback[pba->index_bg_H]*pvecback[pba->index_bg_rho_idm_iv] 
+      + pba->beta_idm_iv*pvecback[pba->index_bg_H]*pvecback[pba->index_bg_rho_iv];
+
     /* Normalise D(z=0)=1 and construct f = D_prime/(aHD) */
     pvecback[pba->index_bg_D] = pData[i*pba->bi_size+pba->index_bi_D]/pData[(pba->bt_size-1)*pba->bi_size+pba->index_bi_D];
     pvecback[pba->index_bg_f] = pData[i*pba->bi_size+pba->index_bi_D_prime]/
       (pData[i*pba->bi_size+pba->index_bi_D]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H]);
 
+    /* Normalise D(z=0)=1 and construct f_rsd = D_prime/(aHD) - Q / H /( rho_b + rho_idm) for interacting vacuum model */
+    if (pba->has_idm_iv == _TRUE_){
+      pvecback[pba->index_bg_D_idm_iv] = pData[i*pba->bi_size+pba->index_bi_D_idm_iv]/pData[(pba->bt_size-1)*pba->bi_size+pba->index_bi_D_idm_iv];
+      pvecback[pba->index_bg_f_rsd] = pData[i*pba->bi_size+pba->index_bi_D_prime_idm_iv]/
+      (pData[i*pba->bi_size+pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_a]*pvecback[pba->index_bg_H]) 
+      - Q_idm_iv / (pvecback[pba->index_bg_rho_b] + pvecback[pba->index_bg_rho_idm_iv]) / pvecback[pba->index_bg_H];
+    }
     /* -> write in the table */
     memcopy_result = memcpy(pba->background_table + i*pba->bg_size,pvecback,pba->bg_size*sizeof(double));
 
@@ -2140,8 +2276,16 @@ int background_initial_conditions(
   pvecback_integration[pba->index_bi_rs] = pvecback_integration[pba->index_bi_tau]/sqrt(3.);
 
   /** - set initial value of D and D' in RD. D will be renormalised later, but D' must be correct. */
+  /* Original CLASS' growth equation IC */
   pvecback_integration[pba->index_bi_D] = a;
   pvecback_integration[pba->index_bi_D_prime] = 2*pvecback_integration[pba->index_bi_D]*pvecback[pba->index_bg_H];
+
+  /** - set initial value of D and D' in RD for idm_iv. D will be renormalised later, but D' must be correct. */
+  // TODO: check if this initial condition for D' is valid for interacting vacuum case??
+  if (pba->has_idm_iv == _TRUE_){
+    pvecback_integration[pba->index_bi_D_idm_iv] = a; 
+    pvecback_integration[pba->index_bi_D_prime_idm_iv] = 2*a*pvecback_integration[pba->index_bi_D_idm_iv]*pvecback[pba->index_bg_H];
+  }
 
   return _SUCCESS_;
 
@@ -2263,6 +2407,10 @@ int background_output_titles(struct background * pba,
   class_store_columntitle(titles,"(.)rho_ur",pba->has_ur);
   class_store_columntitle(titles,"(.)rho_idr",pba->has_idr);
   class_store_columntitle(titles,"(.)rho_idm_dr",pba->has_idm_dr);
+
+  class_store_columntitle(titles,"(.)rho_iv",pba->has_idm_iv);
+  class_store_columntitle(titles,"(.)rho_idm_iv",pba->has_idm_iv);
+
   class_store_columntitle(titles,"(.)rho_crit",_TRUE_);
   class_store_columntitle(titles,"(.)rho_dcdm",pba->has_dcdm);
   class_store_columntitle(titles,"(.)rho_dr",pba->has_dr);
@@ -2282,6 +2430,9 @@ int background_output_titles(struct background * pba,
 
   class_store_columntitle(titles,"gr.fac. D",_TRUE_);
   class_store_columntitle(titles,"gr.fac. f",_TRUE_);
+
+  class_store_columntitle(titles,"gr.fac. D_idm_iv",pba->has_idm_iv);
+  class_store_columntitle(titles,"gr.fac. f_rsd",pba->has_idm_iv);
 
   return _SUCCESS_;
 }
@@ -2320,6 +2471,10 @@ int background_output_data(
     class_store_double(dataptr,pvecback[pba->index_bg_rho_fld],pba->has_fld,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_w_fld],pba->has_fld,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_ur],pba->has_ur,storeidx);
+
+    class_store_double(dataptr,pvecback[pba->index_bg_rho_iv],pba->has_idm_iv,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_rho_idm_iv],pba->has_idm_iv,storeidx);
+
     class_store_double(dataptr,pvecback[pba->index_bg_rho_idr],pba->has_idr,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_idm_dr],pba->has_idm_dr,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_crit],_TRUE_,storeidx);
@@ -2341,6 +2496,9 @@ int background_output_data(
 
     class_store_double(dataptr,pvecback[pba->index_bg_D],_TRUE_,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_f],_TRUE_,storeidx);
+
+    class_store_double(dataptr,pvecback[pba->index_bg_D_idm_iv],pba->has_idm_iv,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_f_rsd],pba->has_idm_iv,storeidx);
   }
 
   return _SUCCESS_;
@@ -2387,7 +2545,8 @@ int background_derivs(
 
   struct background_parameters_and_workspace * pbpaw;
   struct background * pba;
-  double * pvecback, a, H, rho_M;
+  double * pvecback, a, H, H_prime, rho_M;
+  double Q_idm_iv, Q_prime_idm_iv;
 
   pbpaw = parameters_and_workspace;
   pba =  pbpaw->pba;
@@ -2401,6 +2560,7 @@ int background_derivs(
   /** - Short hand notation */
   a = y[pba->index_bi_a];
   H = pvecback[pba->index_bg_H];
+  H_prime = pvecback[pba->index_bg_H_prime];
 
   /** - calculate \f$ a'=a^2 H \f$ */
   dy[pba->index_bi_a] = y[pba->index_bi_a] * y[pba->index_bi_a] * pvecback[pba->index_bg_H];
@@ -2415,13 +2575,29 @@ int background_derivs(
   /** - calculate \f$ rs' = c_s \f$*/
   dy[pba->index_bi_rs] = 1./sqrt(3.*(1.+3.*pvecback[pba->index_bg_rho_b]/4./pvecback[pba->index_bg_rho_g]))*sqrt(1.-pba->K*y[pba->index_bi_rs]*y[pba->index_bi_rs]); // TBC: curvature correction
 
-  /** - solve second order growth equation  \f$ [D''(\tau)=-aHD'(\tau)+3/2 a^2 \rho_M D(\tau) \f$ */
+  /** - initialize to solve second order growth equation  */
   rho_M = pvecback[pba->index_bg_rho_b];
   if (pba->has_cdm)
     rho_M += pvecback[pba->index_bg_rho_cdm];
   if (pba->has_idm_dr)
     rho_M += pvecback[pba->index_bg_rho_idm_dr];
+  
+  /** - solve second order growth equation in interacting vacuum */ 
+  /** \f$ [D''(\tau)=-a (H + Q/\rho_M) D'(\tau) + 3/2 a^2 \rho_M D(\tau) + (aQ' / \rho_M + 5a^2HQ / rho_M + a^2Q^2/rho_M^2) D(\tau) \f$ */
+  if (pba->has_idm_iv) {
+    rho_M += pvecback[pba->index_bg_rho_idm_iv];
+    
+    /** model $Q = \alpha H \rho_{cdm} + \beta H \rho_{V}$ */
+    Q_idm_iv = pba->alpha_idm_iv*H*pvecback[pba->index_bg_rho_idm_iv] + pba->beta_idm_iv*H*pvecback[pba->index_bg_rho_iv];
+    Q_prime_idm_iv = Q_idm_iv*H_prime/H + pba->alpha_idm_iv*H*(-3.*a*H*pvecback[pba->index_bg_rho_idm_iv] - a*Q_idm_iv) + pba->beta_idm_iv*a*H*Q_idm_iv;
 
+    dy[pba->index_bi_D_idm_iv] = y[pba->index_bi_D_prime_idm_iv];
+    dy[pba->index_bi_D_prime_idm_iv] = -(a*H + a*Q_idm_iv/rho_M)*y[pba->index_bi_D_prime_idm_iv] 
+      + 1.5*a*a*rho_M*y[pba->index_bi_D_idm_iv] 
+      + (a*Q_prime_idm_iv/rho_M + 5.*a*a*H*Q_idm_iv/rho_M + a*a*Q_idm_iv*Q_idm_iv/rho_M/rho_M) * y[pba->index_bi_D_idm_iv];
+  }
+
+  /** - solve second order growth equation  \f$ [D''(\tau)=-aHD'(\tau)+3/2 a^2 \rho_M D(\tau) \f$ */
   dy[pba->index_bi_D] = y[pba->index_bi_D_prime];
   dy[pba->index_bi_D_prime] = -a*H*y[pba->index_bi_D_prime] + 1.5*a*a*rho_M*y[pba->index_bi_D];
 
@@ -2614,6 +2790,10 @@ int background_output_budget(
       _class_print_species_("Cold Dark Matter",cdm);
       budget_matter+=pba->Omega0_cdm;
     }
+    if(pba->has_idm_iv){
+      _class_print_species_("Interacting Dark Matter - IV",idm_iv);
+      budget_matter+=pba->Omega0_idm_iv;
+    }
     if(pba->has_idm_dr){
       _class_print_species_("Interacting Dark Matter - DR ",idm_dr);
       budget_matter+=pba->Omega0_idm_dr;
@@ -2650,12 +2830,16 @@ int background_output_budget(
       }
     }
 
-    if(pba->has_lambda || pba->has_fld || pba->has_scf || pba->has_curvature){
+    if(pba->has_lambda || pba->has_idm_iv || pba->has_fld || pba->has_scf || pba->has_curvature){
       printf(" ---> Other Content \n");
     }
     if(pba->has_lambda){
       _class_print_species_("Cosmological Constant",lambda);
       budget_other+=pba->Omega0_lambda;
+    }
+    if(pba->has_idm_iv){
+      _class_print_species_("Interacting vacuum",iv);
+      budget_other+=pba->Omega0_iv;
     }
     if(pba->has_fld){
       _class_print_species_("Dark Energy Fluid",fld);
